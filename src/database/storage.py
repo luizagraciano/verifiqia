@@ -38,9 +38,8 @@ def create_user(username: str, email: str, cpf: str, password: str):
         )
         db.commit()
     except Exception as e:
-        db.rollback()
         raise ValueError(f"Erro ao criar usuário: {e}")
-        
+        db.rollback()
     finally:
         close_db(db)
 
