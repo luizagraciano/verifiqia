@@ -119,6 +119,26 @@ def test_get_activity_list_by_nonexistent_tag():
     assert len(activity_list) == 0
 
 
+def test_get_activity_by_id(activity_data):
+    storage.create_activity(**activity_data)
+    activity_list = storage.get_activity_list()
+    activity_id = activity_list[0][0]
+
+    activity_content = storage.get_activity_content(activity_id)
+
+    assert activity_list is not None
+    assert len(activity_list) == 1
+    assert activity_list[0][1] == activity_data["name"]
+    assert activity_list[0][2] == activity_data["description"]
+    assert activity_list[0][3] == activity_data["tag"]
+    assert activity_list[0][4] == activity_data["difficulty"]
+    assert activity_content is not None
+    assert activity_content[1] == activity_id
+    assert activity_content[2] == activity_data["instruction"]
+    assert activity_content[3] == activity_data["answer"]
+    assert activity_content[4] == activity_data["resources"]
+    
+
 def test_update_activity(activity_data,updated_activity_data):
     storage.create_activity(**activity_data)
     activity_list = storage.get_activity_list()

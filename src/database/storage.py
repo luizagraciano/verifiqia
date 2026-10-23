@@ -103,6 +103,31 @@ def get_activity_list_by_tag(tag: str):
         close_db(db)
     return activity_by_tag
 
+def get_activity_by_id(activity_id: int):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT activity_list.*, 
+            activity_content.instruction, 
+            activity_content.answer, 
+            activity_content.resources
+            FROM activity_list
+            LEFT JOIN activity_content ON activity_list.id = activity_content.activity_id 
+            WHERE activity_list.id = ?
+            """, 
+            (activity_id,)
+        )
+        activity = cursor.fetchone()
+
+        if not activity:
+            raise ValueError(f"Nenhuma atividade encontrada com o ID: {activity_id}")
+        
+    except Exception as e:
+        raise ValueError(f"Erro ao buscar atividade: {e}")
+    finally:
+        close_db(db)
+    return activity
 
 def get_activity_content(activity_id: int):
     try:
