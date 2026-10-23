@@ -7,6 +7,8 @@ import src.database.storage as storage
 def setup_and_teardown(monkeypatch):
     # Setup
     test_connection = sqlite3.connect(":memory:")
+    test_connection.row_factory = sqlite3.Row
+
     test_connection.executescript('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
