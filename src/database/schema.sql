@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS activity_list (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT NOT NULL,
-    tag TEXT NOT NULL,
+    tag TEXT,
     difficulty TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
