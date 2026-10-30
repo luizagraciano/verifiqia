@@ -23,6 +23,7 @@ def seed_db_command():
 
 
 @cli.command("generate-activity")
+# Inicia o fluxo interativo de geração de atividades com inteligência artificial.
 def generate_activity_command():
   generate_activity()
 

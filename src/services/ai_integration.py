@@ -3,9 +3,10 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from google import genai
 
+# Carrega as variáveis de ambiente do arquivo .env para o ambiente de execução.
 load_dotenv()
 
-
+# Define a estrutura de dados para uma atividade educacional, incluindo campos obrigatórios e descrições.
 class Activity(BaseModel):
     name: str = Field(description="Nome da atividade")
     description: str = Field(description="Descrição da atividade")
@@ -15,29 +16,36 @@ class Activity(BaseModel):
     resources: str = Field(description="Fontes utilizadas na atividade")
 
 
+# Gera uma atividade educacional estruturada usando a API do Gemini.
 def generate_activity_with_ai(subject, grade, difficulty, theme) -> Activity:
 
+    # Valida se todos os parâmetros necessários foram informados.
     if not subject or not grade or not difficulty or not theme:
         raise ValueError("Todos os parâmetros devem ser fornecidos.")
 
+    # Recupera a chave da API configurada no ambiente.
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError(
             "GEMINI_API_KEY não foi configurada. Defina essa variável no arquivo .env."
         )
 
+    # Reúne os parâmetros do professor no texto enviado ao modelo.
     input = f"Disciplina: {subject}, Ano Escolar: {grade}, Nível de Dificuldade: {difficulty}, Tema: {theme}"
 
     try:
+        # Cria o cliente autenticado para realizar a chamada à API.
         client = genai.Client(
             api_key=api_key,
         )
 
+        # Define os limites e o nível de raciocínio da geração da resposta.
         generation_config = {
             'max_output_tokens': 65536,
             'thinking_level': 'medium',
         }
 
+        # Solicita uma atividade no formato estruturado e com regras pedagógicas.
         interaction = client.interactions.create(
             model ='models/gemini-3.5-flash',
             input = input,
@@ -115,7 +123,10 @@ def generate_activity_with_ai(subject, grade, difficulty, theme) -> Activity:
     except Exception as e:
         raise ValueError(f"Erro ao gerar atividade com IA: {e}")
 
+    # Valida o JSON retornado pela API conforme o modelo esperado.
     activity_response = Activity.model_validate_json(interaction.output_text)
+
+    # Converte a atividade validada para um dicionário utilizável pela aplicação.
     activity_dict = activity_response.model_dump()
     
     return activity_dict

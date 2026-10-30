@@ -1,8 +1,10 @@
 from src.services.ai_integration import generate_activity_with_ai
 
+# Solicita os parâmetros ao usuário e controla o fluxo de geração da atividade.
 def generate_activity():
 
     try:
+        # Lê e normaliza os quatro parâmetros exigidos pelo gerador de IA.
         subject, grade, difficulty, theme = input("Digite o prompt com a disciplina, ano escolar, nível de dificuldade e tema, separados por vírgula, para gerar a atividade: ").split(",")
         subject, grade, difficulty, theme = subject.strip(), grade.strip(), difficulty.strip(), theme.strip()
     except ValueError:
@@ -11,6 +13,7 @@ def generate_activity():
     
     while True:
         try:
+            # Gera a atividade e apresenta seus campos no terminal.
             print("Aguarde, gerando atividade...")
             activity = generate_activity_with_ai(subject, grade, difficulty, theme)
             print(activity['name'])
@@ -20,8 +23,10 @@ def generate_activity():
             print(activity['answer'])
             print(activity['resources'])
         except ValueError as e:
+            # Exibe erros de validação ou de comunicação com a integração.
             print(f"{e}")
 
+        # Permite escolher entre gerar novamente, salvar ou encerrar o fluxo.
         choice = menu_activity()
 
         if choice == "1":
@@ -39,8 +44,10 @@ def generate_activity():
             print("Opção inválida. Tente novamente.")
             choice = menu_activity()
 
+# Exibe as opções disponíveis para continuar o fluxo da atividade.
 def menu_activity():
     while True:
+        # Solicita uma opção numérica e a devolve para o fluxo principal.
         print("=== Menu ===")
         print("1. Gerar nova atividade")
         print("2. Reenviar prompt")
