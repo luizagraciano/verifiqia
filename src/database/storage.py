@@ -1,7 +1,8 @@
 from src.database.connection import get_db, close_db
 from src.services.auth import password_hash
 
-#User operations
+##OPERAÇÕES DO USUÁRIO
+# Busca um usuário pelo endereço de e-mail e retorna seus dados como dicionário.
 def get_user(email: str):
     try:
         db = get_db()
@@ -15,16 +16,14 @@ def get_user(email: str):
         )
         user = cursor.fetchone()
 
-        if not user:
-            raise ValueError(f"Usuário ou senha incorreta.")
-
     except Exception as e:
         raise ValueError(f"Erro ao buscar usuário: {e}")
     finally:
         close_db(db)
-    return user
+    return dict(user) if user else None
     
 
+# Cria um usuário persistindo a senha em formato de hash.
 def create_user(username: str, email: str, cpf: str, password: str):
     try:
         db = get_db()
@@ -38,12 +37,13 @@ def create_user(username: str, email: str, cpf: str, password: str):
         )
         db.commit()
     except Exception as e:
-        raise ValueError(f"Erro ao criar usuário: {e}")
         db.rollback()
+        raise ValueError(f"Erro ao criar usuário: {e}")
     finally:
         close_db(db)
 
 
+# Atualiza a senha do usuário identificado pelo e-mail.
 def update_user(email: str, password: str):
     try:
         db = get_db()
@@ -64,7 +64,8 @@ def update_user(email: str, password: str):
         close_db(db)
 
 
-#Activity operations
+##OPERAÇÕES DE ATIVIDADES
+# Retorna a lista de atividades cadastradas, ordenada da mais recente para a mais antiga.
 def get_activity_list():
     try:
         db = get_db()
@@ -81,9 +82,10 @@ def get_activity_list():
         raise ValueError(f"Erro ao buscar atividades: {e}")
     finally:
         close_db(db)
-    return activity_list
+    return [dict(activity) for activity in activity_list] if activity_list else None
 
 
+# Busca todas as atividades associadas à tag informada.
 def get_activity_list_by_tag(tag: str):
     try:
         db = get_db()
@@ -101,9 +103,35 @@ def get_activity_list_by_tag(tag: str):
         raise ValueError(f"Erro ao buscar atividades por tag: {e}")
     finally:
         close_db(db)
-    return activity_by_tag
+    return [dict(activity) for activity in activity_by_tag] if activity_by_tag else None
 
 
+# Busca uma atividade pelo identificador, incluindo seu conteúdo complementar.
+def get_activity_by_id(activity_id: int):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT activity_list.*, 
+            activity_content.instruction, 
+            activity_content.answer, 
+            activity_content.resources
+            FROM activity_list
+            LEFT JOIN activity_content ON activity_list.id = activity_content.activity_id 
+            WHERE activity_list.id = ?
+            """, 
+            (activity_id,)
+        )
+        activity = cursor.fetchone()
+
+    except Exception as e:
+        raise ValueError(f"Erro ao buscar atividade: {e}")
+    finally:
+        close_db(db)
+    return dict(activity) if activity else None
+
+
+# Busca o conteúdo detalhado associado a uma atividade.
 def get_activity_content(activity_id: int):
     try:
         db = get_db()
@@ -125,9 +153,10 @@ def get_activity_content(activity_id: int):
         raise ValueError(f"Erro ao buscar conteúdo da atividade: {e}")
     finally:
         close_db(db)
-    return activity_content
+    return dict(activity_content) if activity_content else None
 
 
+# Cria uma atividade e registra seu conteúdo em uma operação transacional.
 def create_activity(name: str, description: str, tag: str, difficulty: str, instruction: str, answer: str, resources: str):
     try:
         db = get_db()
@@ -153,6 +182,7 @@ def create_activity(name: str, description: str, tag: str, difficulty: str, inst
         close_db(db)
 
 
+# Atualiza os dados da atividade e permite manter campos não informados.
 def update_activity(activity_id: int, name: str, description: str, tag: str, difficulty: str, instruction: str, answer: str, resources: str):
     try:
         db = get_db()
@@ -185,6 +215,7 @@ def update_activity(activity_id: int, name: str, description: str, tag: str, dif
         close_db(db)
 
 
+# Remove uma atividade e o conteúdo associado ao seu identificador.
 def delete_activity(activity_id: int):
     try:
         db = get_db()
