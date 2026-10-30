@@ -2,6 +2,7 @@ import pytest
 import src.database.storage as storage
 from tests.conftest import activity_data, incomplete_activity_data
 
+# Verifica a criação de um usuário e a recuperação dos seus dados.
 def test_create_and_get_user(user_data):
     storage.create_user(**user_data)
 
@@ -14,18 +15,21 @@ def test_create_and_get_user(user_data):
     assert user["password"] != user_data["password"]
 
 
+# Verifica que a busca de um usuário inexistente retorna vazio.
 def test_get_nonexistent_user():
     user = storage.get_user("nonexistent@example.com")
 
     assert user is None
 
 
+# Verifica o comportamento da busca quando o e-mail não é informado.
 def test_get_user_with_empty_email():
     user = storage.get_user(None)
 
     assert user is None
 
 
+# Verifica que não é possível criar dois usuários com os mesmos dados únicos.
 def test_create_user_with_existing_email(user_data):
     storage.create_user(**user_data)
 
@@ -34,6 +38,7 @@ def test_create_user_with_existing_email(user_data):
 
     assert "Erro ao criar usuário" in str(error.value)
 
+# Verifica que campos obrigatórios ausentes impedem a criação de um usuário.
 def test_create_user_with_empty_fields(invalid_user_data):
     with pytest.raises(ValueError) as error:
         storage.create_user(**invalid_user_data)
@@ -41,6 +46,7 @@ def test_create_user_with_empty_fields(invalid_user_data):
     assert "Erro ao criar usuário" in str(error.value)
 
 
+# Verifica a atualização da senha sem alterar os demais dados do usuário.
 def test_update_user(user_data):
     storage.create_user(**user_data)
     old_user = storage.get_user("testuser@example.com")
@@ -56,6 +62,7 @@ def test_update_user(user_data):
     assert updated_user["password"] != old_user["password"]
 
 
+# Verifica que uma senha ausente gera erro durante a atualização.
 def test_update_user_with_empty_password():
     with pytest.raises(ValueError) as error:
         storage.update_user("nonexistent@example.com", None)
@@ -63,6 +70,7 @@ def test_update_user_with_empty_password():
     assert "Erro ao atualizar usuário" in str(error.value)
 
 
+# Verifica a criação de uma atividade e a recuperação do seu conteúdo.
 def test_create_and_get_activity(activity_data):
     storage.create_activity(**activity_data)
     activity_list = storage.get_activity_list()
@@ -82,19 +90,22 @@ def test_create_and_get_activity(activity_data):
     assert activity_content["resources"] == activity_data["resources"]
 
 
+# Verifica que campos obrigatórios ausentes impedem a criação de uma atividade.
 def test_create_activity_with_missing_fields(incomplete_activity_data):
     with pytest.raises(ValueError) as error:
         storage.create_activity(**incomplete_activity_data)
-    
+
     assert "Erro ao criar atividade" in str(error.value)
 
 
+# Verifica que a listagem retorna vazio quando não há atividades cadastradas.
 def test_get_empty_activity_list():
     activity_list = storage.get_activity_list()
 
     assert activity_list is None
 
 
+# Verifica a filtragem de atividades por tag.
 def test_get_activity_list_by_tag(activity_data, activity_data2, activity_data3):
     storage.create_activity(**activity_data)
     storage.create_activity(**activity_data2)
@@ -113,12 +124,14 @@ def test_get_activity_list_by_tag(activity_data, activity_data2, activity_data3)
     assert activities_tag2[0]["tag"] != activities_tag1[0]["tag"]
 
 
+# Verifica que uma tag inexistente não retorna atividades.
 def test_get_activity_list_by_nonexistent_tag():
     activity_list = storage.get_activity_list_by_tag("nonexistent_tag")
 
     assert activity_list is None
 
 
+# Verifica a busca de uma atividade pelo identificador e seu conteúdo.
 def test_get_activity_by_id(activity_data):
     storage.create_activity(**activity_data)
     activity_list = storage.get_activity_list()
@@ -140,6 +153,7 @@ def test_get_activity_by_id(activity_data):
     assert activity_content["resources"] == activity_data["resources"]
 
 
+# Verifica a atualização completa dos dados de uma atividade.
 def test_update_activity(activity_data,updated_activity_data):
     storage.create_activity(**activity_data)
     activity_list = storage.get_activity_list()
@@ -159,6 +173,7 @@ def test_update_activity(activity_data,updated_activity_data):
     assert updated_activity_content["resources"] == updated_activity_data["resources"]
 
 
+# Verifica a atualização parcial preservando os campos não informados.
 def test_partial_update_activity(activity_data):
     storage.create_activity(**activity_data)
     activity_list = storage.get_activity_list()
@@ -178,6 +193,7 @@ def test_partial_update_activity(activity_data):
     assert updated_activity_content["resources"] == activity_data["resources"]
 
 
+# Verifica a remoção de uma atividade da listagem persistida.
 def test_delete_activity(activity_data):
     storage.create_activity(**activity_data)
     activity_list = storage.get_activity_list()
