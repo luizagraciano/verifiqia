@@ -23,7 +23,6 @@ def generate_activity():
             print(activity['answer'])
             print(activity['resources'])
         except ValueError as e:
-            # Exibe erros de validação ou de comunicação com a integração.
             print(f"{e}")
 
         # Permite escolher entre gerar novamente, salvar ou encerrar o fluxo.
@@ -47,7 +46,6 @@ def generate_activity():
 # Exibe as opções disponíveis para continuar o fluxo da atividade.
 def menu_activity():
     while True:
-        # Solicita uma opção numérica e a devolve para o fluxo principal.
         print("=== Menu ===")
         print("1. Gerar nova atividade")
         print("2. Reenviar prompt")
