@@ -1,7 +1,8 @@
 from src.database.connection import get_db, close_db
 from src.services.auth import password_hash
 
-#User operations
+##OPERAÇÕES DO USUÁRIO
+# Busca um usuário pelo endereço de e-mail e retorna seus dados como dicionário.
 def get_user(email: str):
     try:
         db = get_db()
@@ -22,6 +23,7 @@ def get_user(email: str):
     return dict(user) if user else None
     
 
+# Cria um usuário persistindo a senha em formato de hash.
 def create_user(username: str, email: str, cpf: str, password: str):
     try:
         db = get_db()
@@ -41,6 +43,7 @@ def create_user(username: str, email: str, cpf: str, password: str):
         close_db(db)
 
 
+# Atualiza a senha do usuário identificado pelo e-mail.
 def update_user(email: str, password: str):
     try:
         db = get_db()
@@ -61,7 +64,8 @@ def update_user(email: str, password: str):
         close_db(db)
 
 
-#Activity operations
+##OPERAÇÕES DE ATIVIDADES
+# Retorna a lista de atividades cadastradas, ordenada da mais recente para a mais antiga.
 def get_activity_list():
     try:
         db = get_db()
@@ -81,6 +85,7 @@ def get_activity_list():
     return [dict(activity) for activity in activity_list] if activity_list else None
 
 
+# Busca todas as atividades associadas à tag informada.
 def get_activity_list_by_tag(tag: str):
     try:
         db = get_db()
@@ -101,6 +106,7 @@ def get_activity_list_by_tag(tag: str):
     return [dict(activity) for activity in activity_by_tag] if activity_by_tag else None
 
 
+# Busca uma atividade pelo identificador, incluindo seu conteúdo complementar.
 def get_activity_by_id(activity_id: int):
     try:
         db = get_db()
@@ -125,6 +131,7 @@ def get_activity_by_id(activity_id: int):
     return dict(activity) if activity else None
 
 
+# Busca o conteúdo detalhado associado a uma atividade.
 def get_activity_content(activity_id: int):
     try:
         db = get_db()
@@ -149,6 +156,7 @@ def get_activity_content(activity_id: int):
     return dict(activity_content) if activity_content else None
 
 
+# Cria uma atividade e registra seu conteúdo em uma operação transacional.
 def create_activity(name: str, description: str, tag: str, difficulty: str, instruction: str, answer: str, resources: str):
     try:
         db = get_db()
@@ -174,6 +182,7 @@ def create_activity(name: str, description: str, tag: str, difficulty: str, inst
         close_db(db)
 
 
+# Atualiza os dados da atividade e permite manter campos não informados.
 def update_activity(activity_id: int, name: str, description: str, tag: str, difficulty: str, instruction: str, answer: str, resources: str):
     try:
         db = get_db()
@@ -206,6 +215,7 @@ def update_activity(activity_id: int, name: str, description: str, tag: str, dif
         close_db(db)
 
 
+# Remove uma atividade e o conteúdo associado ao seu identificador.
 def delete_activity(activity_id: int):
     try:
         db = get_db()

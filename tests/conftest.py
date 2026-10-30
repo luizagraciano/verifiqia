@@ -3,6 +3,7 @@ import sqlite3
 from src.database.connection import get_db
 import src.database.storage as storage
 
+# Prepara um banco SQLite em memória para cada teste e restaura o estado ao final.
 @pytest.fixture(autouse=True)
 def setup_and_teardown(monkeypatch):
     # Setup
@@ -46,6 +47,7 @@ def setup_and_teardown(monkeypatch):
     # Teardown
     test_connection.close()
 
+# Fornece dados válidos para os testes de usuários.
 @pytest.fixture()
 def user_data():
     user_data = {
@@ -57,6 +59,7 @@ def user_data():
 
     return user_data
 
+# Fornece dados inválidos para validar as regras de criação de usuários.
 @pytest.fixture()
 def invalid_user_data():
     invalid_user_data = {
@@ -68,6 +71,7 @@ def invalid_user_data():
 
     return invalid_user_data
 
+# Fornece dados válidos para criar uma atividade de teste.
 @pytest.fixture()
 def activity_data():
     activity_data = {
@@ -82,6 +86,7 @@ def activity_data():
 
     return activity_data
 
+# Fornece uma segunda atividade para testes de filtros e listagens.
 @pytest.fixture()
 def activity_data2():
     activity_data2 = {
@@ -96,6 +101,7 @@ def activity_data2():
 
     return activity_data2
 
+# Fornece uma terceira atividade para testes de filtros e listagens.
 @pytest.fixture()
 def activity_data3():
     activity_data3 = {
@@ -110,6 +116,7 @@ def activity_data3():
 
     return activity_data3
 
+# Fornece os valores esperados após a atualização de uma atividade.
 @pytest.fixture()
 def updated_activity_data():
     updated_activity_data = {
@@ -124,6 +131,7 @@ def updated_activity_data():
 
     return updated_activity_data
 
+# Fornece dados incompletos para validar falhas na criação de atividades.
 @pytest.fixture()
 def incomplete_activity_data():
     imcomplete_activity_data = {
