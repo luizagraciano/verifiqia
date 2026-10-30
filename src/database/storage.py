@@ -15,14 +15,11 @@ def get_user(email: str):
         )
         user = cursor.fetchone()
 
-        if not user:
-            raise ValueError(f"Usuário ou senha incorreta.")
-
     except Exception as e:
         raise ValueError(f"Erro ao buscar usuário: {e}")
     finally:
         close_db(db)
-    return user
+    return dict(user) if user else None
     
 
 def create_user(username: str, email: str, cpf: str, password: str):
@@ -38,8 +35,8 @@ def create_user(username: str, email: str, cpf: str, password: str):
         )
         db.commit()
     except Exception as e:
-        raise ValueError(f"Erro ao criar usuário: {e}")
         db.rollback()
+        raise ValueError(f"Erro ao criar usuário: {e}")
     finally:
         close_db(db)
 
@@ -81,7 +78,7 @@ def get_activity_list():
         raise ValueError(f"Erro ao buscar atividades: {e}")
     finally:
         close_db(db)
-    return activity_list
+    return [dict(activity) for activity in activity_list] if activity_list else None
 
 
 def get_activity_list_by_tag(tag: str):
@@ -101,7 +98,31 @@ def get_activity_list_by_tag(tag: str):
         raise ValueError(f"Erro ao buscar atividades por tag: {e}")
     finally:
         close_db(db)
-    return activity_by_tag
+    return [dict(activity) for activity in activity_by_tag] if activity_by_tag else None
+
+
+def get_activity_by_id(activity_id: int):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT activity_list.*, 
+            activity_content.instruction, 
+            activity_content.answer, 
+            activity_content.resources
+            FROM activity_list
+            LEFT JOIN activity_content ON activity_list.id = activity_content.activity_id 
+            WHERE activity_list.id = ?
+            """, 
+            (activity_id,)
+        )
+        activity = cursor.fetchone()
+
+    except Exception as e:
+        raise ValueError(f"Erro ao buscar atividade: {e}")
+    finally:
+        close_db(db)
+    return dict(activity) if activity else None
 
 
 def get_activity_content(activity_id: int):
@@ -125,7 +146,7 @@ def get_activity_content(activity_id: int):
         raise ValueError(f"Erro ao buscar conteúdo da atividade: {e}")
     finally:
         close_db(db)
-    return activity_content
+    return dict(activity_content) if activity_content else None
 
 
 def create_activity(name: str, description: str, tag: str, difficulty: str, instruction: str, answer: str, resources: str):
