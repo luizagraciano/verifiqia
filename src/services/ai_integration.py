@@ -21,7 +21,7 @@ def generate_activity_with_ai(subject, grade, difficulty, theme) -> Activity:
 
     # Valida se todos os parâmetros necessários foram informados.
     if not subject or not grade or not difficulty or not theme:
-        raise ValueError("Todos os parâmetros devem ser fornecidos.")
+        raise ValueError("Certifique-se de fornecer todos os parâmetros separados por vírgula.")
 
     # Recupera a chave da API configurada no ambiente.
     api_key = os.environ.get("GEMINI_API_KEY")

@@ -1,6 +1,6 @@
 import click
 from src.database.connection import init_db, seed_db
-from src.interface.app import generate_activity
+from src.interface.app import generate_activity, main_menu
 
 @click.group()
 # Agrupa os comandos de linha de comando disponíveis para a aplicação.
@@ -21,6 +21,10 @@ def seed_db_command():
   seed_db()
   click.echo("Banco de dados de atividades offline foi pré-carregado.")
 
+@cli.command("main-menu")
+# Inicia o fluxo interativo de geração de atividades com inteligência artificial.
+def main_menu_command():
+  main_menu()
 
 @cli.command("generate-activity")
 # Inicia o fluxo interativo de geração de atividades com inteligência artificial.
