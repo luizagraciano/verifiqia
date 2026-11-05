@@ -1,5 +1,5 @@
-from connection import get_db, close_db
-from services.auth import password_hash
+from src.database.connection import get_db, close_db
+from src.services.auth import password_hash
 
 #User operations
 def get_user(email: str):

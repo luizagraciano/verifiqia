@@ -4,7 +4,7 @@ import click
 
 BASE_DIR = os.path.dirname((os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
-DATABASE_DIR = os.path.join(BASE_DIR, 'database')
+DATABASE_DIR = os.path.join(BASE_DIR, 'src', 'database')
 DATA_FILE = os.path.join(DATA_DIR, 'database.sqlite')
 SCHEMA_FILE = os.path.join(DATABASE_DIR, 'schema.sql')
 SEED_FILE = os.path.join(DATABASE_DIR, 'seed.sql')
