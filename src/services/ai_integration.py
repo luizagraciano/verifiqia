@@ -6,6 +6,10 @@ from google import genai
 # Carrega as variáveis de ambiente do arquivo .env para o ambiente de execução.
 load_dotenv()
 
+# Respostas padrão retornadas pela IA para solicitações recusadas.
+REFUSED_RESPONSES = ["Solicitação inválida", "Solicitação inválida. A requisição viola os termos de segurança ou está fora do escopo curricular educacional.", "N/A"]
+
+
 # Define a estrutura de dados para uma atividade educacional, incluindo campos obrigatórios e descrições.
 class Activity(BaseModel):
     name: str = Field(description="Nome da atividade")
@@ -128,5 +132,9 @@ def generate_activity_with_ai(subject, grade, difficulty, theme) -> Activity:
 
     # Converte a atividade validada para um dicionário utilizável pela aplicação.
     activity_dict = activity_response.model_dump()
+
+    for field in activity_dict:
+        if activity_dict[field] in REFUSED_RESPONSES:
+            raise ValueError("Solicitação recusada por não atender aos critérios de segurança ou escopo curricular.")
     
     return activity_dict
