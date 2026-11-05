@@ -1,9 +1,8 @@
-import sqlite3
-
-
-from pathlib import Path
-
-DB_NAME = Path(__file__).resolve().parents[2] / "data" / "database.sqlite"
+from src.database.storage import (
+    get_activity_list,
+    get_activity_content,
+    update_activity
+)
 
 
 def get_activity(activity_id):
@@ -11,52 +10,37 @@ def get_activity(activity_id):
     Busca uma atividade pelo ID e retorna seus dados,
     incluindo instruções, respostas e recursos.
     """
-
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-
     try:
-        cursor = conn.cursor()
+        activities = get_activity_list()
 
-        cursor.execute("""
-            SELECT
-                a.id,
-                a.name,
-                a.description,
-                a.tag,
-                a.difficulty,
-                a.created_at,
-                c.id AS content_id,
-                c.instruction,
-                c.answer,
-                c.resources
-            FROM activity_list AS a
-            LEFT JOIN activity_content AS c
-                ON a.id = c.activity_id
-            WHERE a.id = ?
-        """, (activity_id,))
+        activity_row = next(
+            (item for item in activities if item[0] == activity_id),
+            None
+        )
 
-        rows = cursor.fetchall()
-
-        if not rows:
+        if activity_row is None:
             return None
 
-        activity = dict(rows[0])
-        activity["contents"] = []
+        activity = dict(zip(
+            ("id", "name", "description", "tag", "difficulty", "created_at"),
+            activity_row
+        ))
 
-        for row in rows:
-            if row["content_id"] is not None:
-                activity["contents"].append({
-                    "id": row["content_id"],
-                    "instruction": row["instruction"],
-                    "answer": row["answer"],
-                    "resources": row["resources"]
-                })
+        content = get_activity_content(activity_id)
+
+        content_data = dict(zip(
+            ("id", "activity_id", "instruction", "answer", "resources"),
+            content
+        ))
+
+        activity["instruction"] = content_data["instruction"]
+        activity["answer"] = content_data["answer"]
+        activity["resources"] = content_data["resources"]
 
         return activity
 
-    finally:
-        conn.close()
+    except ValueError:
+        return None
 
 
 def edit_activity(
@@ -74,7 +58,6 @@ def edit_activity(
     Retorna uma mensagem de sucesso ou de erro.
     """
 
-    # Valida os campos obrigatórios antes de salvar.
     fields = {
         "Título": name,
         "Descrição": description,
@@ -92,96 +75,47 @@ def edit_activity(
                 "message": f"O campo {field_name} é obrigatório."
             }
 
-    conn = sqlite3.connect(DB_NAME)
+    if not isinstance(activity_id, int) or activity_id <= 0:
+        return {
+            "success": False,
+            "message": "ID da atividade inválido."
+        }
+
+    activity = get_activity(activity_id)
+
+    if activity is None:
+        return {
+            "success": False,
+            "message": "Atividade não encontrada."
+        }
 
     try:
-        cursor = conn.cursor()
-
-        # Confirma que a atividade existe.
-        cursor.execute("""
-            SELECT id
-            FROM activity_list
-            WHERE id = ?
-        """, (activity_id,))
-
-        if cursor.fetchone() is None:
-            return {
-                "success": False,
-                "message": "Atividade não encontrada."
-            }
-
-        # Atualiza as informações principais.
-        cursor.execute("""
-            UPDATE activity_list
-            SET name = ?,
-                description = ?,
-                tag = ?,
-                difficulty = ?
-            WHERE id = ?
-        """, (
+        update_activity(
+            activity_id,
             name.strip(),
             description.strip(),
             tag.strip(),
             difficulty.strip(),
-            activity_id
-        ))
+            instruction.strip(),
+            answer.strip(),
+            resources.strip()
+        )
 
-        # Verifica se já existe conteúdo para a atividade.
-        cursor.execute("""
-            SELECT id
-            FROM activity_content
-            WHERE activity_id = ?
-            LIMIT 1
-        """, (activity_id,))
+        updated_activity = get_activity(activity_id)
 
-        content = cursor.fetchone()
-
-        if content:
-            # Atualiza o conteúdo existente.
-            cursor.execute("""
-                UPDATE activity_content
-                SET instruction = ?,
-                    answer = ?,
-                    resources = ?
-                WHERE activity_id = ?
-            """, (
-                instruction.strip(),
-                answer.strip(),
-                resources.strip(),
-                activity_id
-            ))
-        else:
-            # Cria o conteúdo caso ainda não exista.
-            cursor.execute("""
-                INSERT INTO activity_content (
-                    activity_id,
-                    instruction,
-                    answer,
-                    resources
-                )
-                VALUES (?, ?, ?, ?)
-            """, (
-                activity_id,
-                instruction.strip(),
-                answer.strip(),
-                resources.strip()
-            ))
-
-        # Confirma as alterações no banco.
-        conn.commit()
+        if updated_activity is None:
+            return {
+                "success": False,
+                "message": "Não foi possível confirmar a atualização."
+            }
 
         return {
             "success": True,
             "message": "Atividade atualizada com sucesso."
         }
 
-    except sqlite3.Error:
-        conn.rollback()
-
+    except ValueError:
         return {
             "success": False,
             "message": "Erro ao atualizar a atividade."
         }
-
-    finally:
-        conn.close()
