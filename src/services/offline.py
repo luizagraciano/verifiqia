@@ -1,6 +1,6 @@
 from src.database.storage import create_activity, get_offline_activity_list_by_tag, get_db, close_db
 
-# As tags fixas do sistema, conforme a sua História de Usuário OFF-01
+# As tags fixas do sistema
 TAGS_SISTEMA = ["Ética", "Matemática", "Português", "História", "Ciências", "Geografia"]
 
 def salvar_atividade_offline(name: str, description: str, tag: str, difficulty: str, instruction: str, answer: str, resources: str):
@@ -35,14 +35,14 @@ def salvar_atividade_offline(name: str, description: str, tag: str, difficulty: 
         close_db(db)
 
 def buscar_atividades_por_tag_offline(tag: str):
-    """Busca as atividades no banco usando a função da sua líder."""
+    """Busca as atividades no banco usando a função do arquivo storage.py"""
     if tag not in TAGS_SISTEMA:
         return []
         
     # Puxa a lista do banco
     atividades = get_offline_activity_list_by_tag(tag)
     
-    # Se a função da líder retornar None (vazio), devolvemos uma lista vazia
+    # Se a função do storage.py retornar None (vazio), devolvemos uma lista vazia
     if not atividades:
         return []
         
