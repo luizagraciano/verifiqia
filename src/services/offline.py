@@ -1,62 +1,64 @@
-from src.database.storage import get_db, close_db
+from src.database.storage import create_activity, get_offline_activity_list_by_tag, get_db, close_db
 
-def salvar_atividade_offline(name, description, tag, difficulty, instruction, answer, resources):
-    """
-    Salva uma atividade completa no banco de dados local (biblioteca offline).
-    """
+# As tags fixas do sistema, conforme a sua História de Usuário OFF-01
+TAGS_SISTEMA = ["Ética", "Matemática", "Português", "História", "Ciências", "Geografia"]
+
+def salvar_atividade_offline(name: str, description: str, tag: str, difficulty: str, instruction: str, answer: str, resources: str):
+    """Salva uma atividade na tabela exclusiva de offline."""
+    if tag not in TAGS_SISTEMA:
+        raise ValueError(f"A tag '{tag}' é inválida. O sistema só aceita: {TAGS_SISTEMA}")
+    
     db = get_db()
-    if not db:
-        print("Erro: não foi possível conectar ao banco de dados.")
-        return
-
     try:
         cursor = db.cursor()
         
-        # 1. Salva os dados principais na tabela activity_list
-        cursor.execute(
-            """
-            INSERT INTO activity_list (name, description, tag, difficulty) 
+        # 1. Salva na tabela offline_activity_list
+        cursor.execute("""
+            INSERT INTO offline_activity_list (name, description, tag, difficulty) 
             VALUES (?, ?, ?, ?)
-            """,
-            (name, description, tag, difficulty)
-        )
+            """, (name, description, tag, difficulty))
         
-        # Pega o ID da atividade que acabou de ser criada
         activity_id = cursor.lastrowid 
         
-        # 2. Salva o conteúdo na tabela activity_content
-        cursor.execute(
-            """
-            INSERT INTO activity_content (activity_id, instruction, answer, resources) 
+        # 2. Salva na tabela offline_activity_content
+        cursor.execute("""
+            INSERT INTO offline_activity_content (activity_id, instruction, answer, resources) 
             VALUES (?, ?, ?, ?)
-            """,
-            (activity_id, instruction, answer, resources)
-        )
+            """, (activity_id, instruction, answer, resources))
         
         db.commit()
-        print(f"Sucesso! Atividade '{name}' salva na biblioteca offline.")
-        
+        return True
     except Exception as e:
-        print(f"Erro ao salvar atividade offline: {e}")
-        db.rollback() # Desfaz a operação se der erro no meio do caminho
+        db.rollback()
+        raise ValueError(f"Erro ao salvar atividade offline: {e}")
     finally:
         close_db(db)
 
+def buscar_atividades_por_tag_offline(tag: str):
+    """Busca as atividades no banco usando a função da sua líder."""
+    if tag not in TAGS_SISTEMA:
+        return []
+        
+    # Puxa a lista do banco
+    atividades = get_offline_activity_list_by_tag(tag)
+    
+    # Se a função da líder retornar None (vazio), devolvemos uma lista vazia
+    if not atividades:
+        return []
+        
+    return atividades
+
 def listar_atividades_offline():
-    """
-    Busca as atividades salvas localmente juntando as duas tabelas.
-    """
+    """Mantida conforme alinhado durante reunião do grupo."""
     db = get_db()
     try:
         cursor = db.cursor()
-        # O JOIN junta os dados da lista com os conteúdos
         cursor.execute("""
             SELECT a.id, a.name, a.description, a.tag, a.difficulty, c.instruction 
             FROM activity_list a
             JOIN activity_content c ON a.id = c.activity_id
         """)
-        atividades = cursor.fetchall()
-        return atividades
+        return cursor.fetchall()
     except Exception as e:
         print(f"Erro ao buscar atividades: {e}")
         return []
