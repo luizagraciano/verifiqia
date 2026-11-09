@@ -238,3 +238,70 @@ def delete_activity(activity_id: int):
         raise ValueError(f"Erro ao deletar atividade: {e}")
     finally:
         close_db(db)
+
+
+##ATIVIDADES OFFLINE
+# Retorna a lista de atividades pré-prontas offline cadastradas, ordenada da mais recente para a mais antiga.
+def get_offline_activity_list():
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT * 
+            FROM offline_activity_list 
+            ORDER BY id DESC
+            """
+        )
+        offline_activity_list = cursor.fetchall()
+
+    except Exception as e:
+        raise ValueError(f"Erro ao buscar atividades: {e}")
+    finally:
+        close_db(db)
+    return [dict(activity) for activity in offline_activity_list] if offline_activity_list else None
+
+
+# Busca todas as atividades préprontas do banco offline associadas à tag informada.
+def get_offline_activity_list_by_tag(tag: str):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT * 
+            FROM offline_activity_list 
+            WHERE tag = ?
+            """, 
+            (tag,)
+        )
+        offline_activity_by_tag = cursor.fetchall()
+        
+    except Exception as e:
+        raise ValueError(f"Erro ao buscar atividades por tag: {e}")
+    finally:
+        close_db(db)
+    return [dict(activity) for activity in offline_activity_by_tag] if offline_activity_by_tag else None
+
+
+# Busca o conteúdo detalhado associado a uma atividade pré-pronta do banco offline.
+def get_offline_activity_content(activity_id: int):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT * 
+            FROM offline_activity_content 
+            WHERE activity_id = ?
+            """, 
+            (activity_id,)
+        )
+
+        offline_activity_content = cursor.fetchone()
+
+        if not offline_activity_content:
+            raise ValueError(f"Nenhum conteúdo encontrado para a atividade: {activity_id}")
+        
+    except Exception as e:
+        raise ValueError(f"Erro ao buscar conteúdo da atividade: {e}")
+    finally:
+        close_db(db)
+    return dict(offline_activity_content) if offline_activity_content else None
