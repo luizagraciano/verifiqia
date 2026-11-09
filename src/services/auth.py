@@ -7,102 +7,95 @@ def password_hash(password: str):
     password_hash = bcrypt.hashpw(password_bytes, salt)
     return password_hash
 
-"""VERIFIQIA — US-01: cadastro de conta de professor.
-
-Execução:  flask --app app run
-Variáveis: VERIFIQIA_SECRET_KEY, VERIFIQIA_CPF_KEY (chave Fernet), VERIFIQIA_CPF_INDEX_KEY, VERIFIQIA_DB
-"""
+import hashlib
 import os
-import sqlite3
-import uuid
-from datetime import datetime, timezone
+from getpass import getpass
  
-from flask import Flask, flash, redirect, render_template, request, url_for
+# Quantas vezes o hash da senha é repetido (deixa mais difícil de quebrar).
+HASH_ROUNDS = 600_000
+ 
+# Lista onde ficam os professores cadastrados (só na memória, enquanto o programa roda).
+users = []
 
-import banco
-import seguranca
-import validacao
-
-MSG_SUCESSO = "Conta criada com sucesso"
-MSG_DUPLICADO = "Já existe uma conta com este e-mail ou CPF"
-MSG_FALHA = "Não foi possível criar a conta agora. Tente novamente em instantes."
-
-
-def create_app(config=None):
-    app = Flask(__name__)
-    app.config.update(
-        SECRET_KEY=os.environ.get("VERIFIQIA_SECRET_KEY"),
-        CPF_ENC_KEY=os.environ.get("VERIFIQIA_CPF_KEY"),
-        CPF_INDEX_KEY=os.environ.get("VERIFIQIA_CPF_INDEX_KEY"),
-        DATABASE=os.environ.get("VERIFIQIA_DB", "verifiqia.db"),
-        TERMOS_VERSAO="2026-10",
-        MAX_CONTENT_LENGTH=16 * 1024,
-        SESSION_COOKIE_SAMESITE="Lax",  # em produção, defina também SESSION_COOKIE_SECURE=True
-    )
-    app.config.update(config or {})
-    for chave in ("SECRET_KEY", "CPF_ENC_KEY", "CPF_INDEX_KEY"):
-        if not app.config[chave]:
-            raise RuntimeError(f"Configuração ausente: {chave}")
-
-    protetor = seguranca.ProtetorCPF(app.config["CPF_ENC_KEY"], app.config["CPF_INDEX_KEY"])
-    app.extensions["protetor_cpf"] = protetor
-    banco.init_db(app.config["DATABASE"])
-
-    def pagina(valores=None, erros=None, aviso=None):
-        return render_template(
-            "cadastro.html", v=valores or {}, e=erros or {}, aviso=aviso,
-            etapas=validacao.ETAPAS, familiaridade=validacao.FAMILIARIDADE_IA,
-            internet=validacao.ACESSO_INTERNET)
-
-    @app.after_request
-    def cabecalhos(resp):
-        resp.headers["Cache-Control"] = "no-store"
-        resp.headers["X-Content-Type-Options"] = "nosniff"
-        resp.headers["Referrer-Policy"] = "no-referrer"
-        return resp
-
-    @app.get("/")
-    def inicio():
-        return redirect(url_for("cadastro"))
-
-    @app.get("/login")
-    def login():  # apenas destino do redirecionamento; autenticação fica fora da US-01
-        return render_template("login.html")
-
-    @app.route("/cadastro", methods=["GET", "POST"])
-    def cadastro():
-        if request.method == "GET":
-            return pagina()
-
-        valores = {k: v for k, v in request.form.items() if k != "senha"}  # nunca devolve a senha
-        dados, erros = validacao.validar_cadastro(request.form)
-        if erros:
-            return pagina(valores, erros), 400
-
-        agora = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        registro = {
-            "id": str(uuid.uuid4()),
-            "nome": dados["nome"],
-            "email": dados["email"],
-            "cpf_cifrado": protetor.cifrar(dados["cpf"]),
-            "cpf_indice": protetor.indice(dados["cpf"]),
-            "senha_hash": seguranca.hash_senha(dados["senha"]),
-            "etapa_ano": dados["etapa_ano"],
-            "familiaridade_ia": dados["familiaridade_ia"],
-            "acesso_internet": dados["acesso_internet"],
-            "termos_versao": app.config["TERMOS_VERSAO"],
-            "termos_aceitos_em": agora,
-            "criado_em": agora,
-        }
-        try:
-            banco.inserir_professor(app.config["DATABASE"], registro)
-        except (sqlite3.Error, OSError) as exc:
-            if isinstance(exc, sqlite3.IntegrityError) and str(exc).startswith("UNIQUE"):
-                return pagina(valores, aviso=MSG_DUPLICADO), 409
-            app.logger.error("Falha ao gravar cadastro de professor: %s", type(exc).__name__)
-            return pagina(valores, aviso=MSG_FALHA), 500
-
-        flash(MSG_SUCESSO)
-        return redirect(url_for("login"))
-
-    return app
+# ======================================================================
+# CAMADA 1 e 2 — ENTRADA DE DADOS + CHECAGEM (CADASTRO)
+# Cada dado é pedido num laço que só termina quando o valor está correto.
+# ======================================================================
+ 
+print("\n================= Cadastro de Professor =================")
+ 
+# --- Nome: nome e sobrenome, sem números ---
+while True:
+    name = " ".join(input("\nNome completo: ").split())  # tira espaços extras
+    if len(name.split()) >= 2 and not any(c.isdigit() for c in name):
+        break
+    print("Nome inválido. Digite nome e sobrenome, sem números.")
+ 
+# --- E-mail: um "@", sem espaços, e um ponto no domínio (ex.: nome@escola.com) ---
+while True:
+    email = input("\nE-mail: ").strip().lower()
+    if email.count("@") == 1 and " " not in email:
+        local, domain = email.split("@")
+        if local != "" and "." in domain and not domain.startswith(".") and not domain.endswith("."):
+            break
+    print("E-mail inválido. Exemplo: nome@escola.com")
+ 
+# --- Senha: mínimo 8 caracteres, com letras e números, digitada duas vezes ---
+while True:
+    password = getpass("\nSenha (mín. 8 caracteres, com letras e números): ")
+ 
+    if len(password) < 8 or not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
+        print("Senha inválida. Use pelo menos 8 caracteres, com letras e números.")
+        continue
+ 
+    if password != getpass("Confirme a senha: "):
+        print("As senhas não conferem. Digite novamente.")
+        continue
+ 
+    break
+ 
+# ======================================================================
+# CAMADA 3 — ARMAZENAMENTO
+# A senha nunca é guardada: guardamos só o hash dela, misturado com um "salt" aleatório.
+# ======================================================================
+ 
+salt = os.urandom(16)
+password_hash = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, HASH_ROUNDS)
+ 
+users.append({
+    "name": name,
+    "email": email,
+    "salt": salt,
+    "password_hash": password_hash,
+})
+ 
+print("\nCadastro realizado com sucesso!")
+ 
+# ======================================================================
+# CAMADA 4 — LOGIN
+# Pede e-mail e senha, refaz o hash e compara com o que está guardado (até 3 tentativas).
+# ======================================================================
+ 
+print("\n======================== Login ========================")
+ 
+logged_user = None
+ 
+for attempt in range(3):
+    login_email = input("\nE-mail: ").strip().lower()
+    login_password = getpass("Senha: ")
+ 
+    for user in users:
+        if user["email"] == login_email:
+            digest = hashlib.pbkdf2_hmac("sha256", login_password.encode(), user["salt"], HASH_ROUNDS)
+            if digest == user["password_hash"]:
+                logged_user = user
+ 
+    if logged_user is not None:
+        break
+ 
+    print("E-mail ou senha incorretos.")
+ 
+if logged_user is not None:
+    print(f"\nBem-vindo(a), {logged_user['name'].split()[0]}!")
+else:
+    print("\nMuitas tentativas incorretas. Encerrando.")
