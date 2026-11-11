@@ -1,8 +1,7 @@
-from src.database.storage import create_activity
 
+from src.database.storage import create_activity
 from src.database.storage import (
-    get_activity_list,
-    get_activity_content,
+    get_activity_by_id,
     update_activity
 )
 
@@ -36,39 +35,12 @@ def get_activity(activity_id):
     incluindo instruções, respostas e recursos.
     """
     try:
-        activities = get_activity_list()
-
-        activity_row = next(
-            (item for item in activities if item[0] == activity_id),
-            None
-        )
-
-        if activity_row is None:
-            return None
-
-        activity = dict(zip(
-            ("id", "name", "description", "tag", "difficulty", "created_at"),
-            activity_row
-        ))
-
-        content = get_activity_content(activity_id)
-
-        content_data = dict(zip(
-            ("id", "activity_id", "instruction", "answer", "resources"),
-            content
-        ))
-
-        activity["instruction"] = content_data["instruction"]
-        activity["answer"] = content_data["answer"]
-        activity["resources"] = content_data["resources"]
-
-        return activity
-
-    except ValueError:
+        return get_activity_by_id(activity_id)
+    except (TypeError, ValueError):
         return None
 
 
-def edit_activity(
+def edit_activity_in_database(
     activity_id,
     name,
     description,
@@ -82,65 +54,39 @@ def edit_activity(
     Edita uma atividade existente.
     Retorna uma mensagem de sucesso ou de erro.
     """
+   
+    try:
+        activity_id = int(activity_id)
+    except (TypeError, ValueError):
+        raise ValueError("ID da atividade inválido.")
 
-    fields = {
-        "Título": name,
-        "Descrição": description,
-        "Tema": tag,
-        "Dificuldade": difficulty,
-        "Instruções": instruction,
-        "Respostas": answer,
-        "Recursos/orientações": resources
-    }
-
-    for field_name, value in fields.items():
-        if not isinstance(value, str) or not value.strip():
-            return {
-                "success": False,
-                "message": f"O campo {field_name} é obrigatório."
-            }
-
-    if not isinstance(activity_id, int) or activity_id <= 0:
-        return {
-            "success": False,
-            "message": "ID da atividade inválido."
-        }
+    if activity_id <= 0:
+        raise ValueError("ID da atividade inválido.")
+        
 
     activity = get_activity(activity_id)
-
     if activity is None:
-        return {
-            "success": False,
-            "message": "Atividade não encontrada."
-        }
+        raise ValueError("Atividade não encontrada.")
 
     try:
         update_activity(
             activity_id,
-            name.strip(),
-            description.strip(),
-            tag.strip(),
-            difficulty.strip(),
-            instruction.strip(),
-            answer.strip(),
-            resources.strip()
+            name,
+            description,
+            tag,
+            difficulty,
+            instruction,
+            answer,
+            resources
         )
 
         updated_activity = get_activity(activity_id)
 
         if updated_activity is None:
-            return {
-                "success": False,
-                "message": "Não foi possível confirmar a atualização."
-            }
+            raise ValueError("Erro ao recuperar a atividade atualizada.")
+        else:
+            print("\nAtividade atualizada com sucesso.\n")
+            return updated_activity
 
-        return {
-            "success": True,
-            "message": "Atividade atualizada com sucesso."
-        }
-
-    except ValueError:
-        return {
-            "success": False,
-            "message": "Erro ao atualizar a atividade."
-        }
+    except Exception as e:
+        raise ValueError(f"Erro ao atualizar a atividade: {e}")
