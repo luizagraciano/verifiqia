@@ -1,8 +1,4 @@
 from src.database.storage import get_activity_by_id, get_activity_list, get_activity_content, get_activity_list_by_tag
-from .exporter import imprimir_atividade  # junção com a história IMP-01
-
-usuario_autenticado = True
-
 
 # ---------------------------------------------------------------
 # 2) LISTAR AS ATIVIDADES
@@ -13,18 +9,16 @@ def carregar_atividades():
         return get_activity_list()
     except Exception as e:
         raise ValueError(f"{e}")
-     
 
-def listar_atividades(lista):
-    print("\n--- BIBLIOTECA DE ATIVIDADES ---")
-    if len(lista) == 0:
-        print("Nenhuma atividade encontrada")
-        return
-    for numero, atividade in enumerate(lista, start=1):
-        print(
-            f"[{numero}] {atividade['name']} "
-            f"({atividade['description']}, {atividade['difficulty']}, {atividade['tag']})"
-        )
+
+def carregar_atividade(activity_id):
+    try:
+        atividade = get_activity_by_id(activity_id)
+        if not atividade:
+            raise ValueError("Atividade não encontrada")
+        return atividade
+    except Exception as e:
+        raise ValueError(f"{e}")
 
 
 # ---------------------------------------------------------------

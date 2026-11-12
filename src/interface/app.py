@@ -1,7 +1,11 @@
 from src.services.activity import save_activity_to_database, edit_activity_in_database
 from src.services.exporter import imprimir_atividade
 from src.services.ai_integration import generate_activity_with_ai
-from src.services.library import buscar_atividades, carregar_atividades, listar_atividades
+from src.services.library import (
+    buscar_atividades,
+    carregar_atividade,
+    carregar_atividades
+)
 
 
 # Exibe o menu principal da aplicação e direciona para os fluxos de geração de atividades ou biblioteca de atividades.
@@ -245,6 +249,14 @@ def display_updated_activity(updated_activity):
 # ---------------------------------------------------------------
 # 5) MENU DA BIBLIOTECA
 # ---------------------------------------------------------------
+def obter_atividades_salvas():
+    try:
+        return carregar_atividades()
+    except ValueError as e:
+        print(f"\n{e}")
+        return None
+
+
 def menu_biblioteca():
     # Regra 1: só usuário autenticado
     """
@@ -252,10 +264,8 @@ def menu_biblioteca():
         print("Acesso negado. Faça login para acessar a biblioteca.")
         return
     """
-    try:
-        atividades_salvas = carregar_atividades()
-    except ValueError as e:
-        print(f"\n{e}")
+    atividades_salvas = obter_atividades_salvas()
+    if atividades_salvas is None:
         return
     
     # Cenário 3: biblioteca vazia
@@ -265,10 +275,8 @@ def menu_biblioteca():
         if resposta == "s":
             print("\nIndo para o gerador de atividades...")
             generate_activity(from_library=True)
-            try:
-                atividades_salvas = carregar_atividades()
-            except ValueError as e:
-                print(f"\n{e}")
+            atividades_salvas = obter_atividades_salvas()
+            if atividades_salvas is None:
                 return
 
             if len(atividades_salvas) == 0:
@@ -300,12 +308,36 @@ def menu_biblioteca():
         elif escolha == "l":
             filtro = ""
         elif escolha.isdigit() and 1 <= int(escolha) <= len(resultado):
-            quer_nova_impressao = exibir_atividade(resultado[int(escolha) - 1])
-            if quer_nova_impressao:
-                filtro = ""  # limpa o filtro e mostra a lista completa
+            atividade_resumida = resultado[int(escolha) - 1]
+            try:
+                atividade = carregar_atividade(atividade_resumida["id"])
+            except ValueError as e:
+                print(f"\n{e}")
+                continue
+
+            iniciar_nova_impressao = exibir_atividade(atividade)
+
+            if iniciar_nova_impressao:
+                filtro = ""
                 print("\nEscolha outra atividade para imprimir.")
+
+            atividades_salvas = obter_atividades_salvas()
+            if atividades_salvas is None:
+                return
         else:
             print("\nOpção inválida.")
+
+
+def listar_atividades(lista):
+    print("\n============ Biblioteca de Atividades ============\n")
+    if len(lista) == 0:
+        print("Nenhuma atividade encontrada")
+        return
+    for numero, atividade in enumerate(lista, start=1):
+        print(
+            f"[{numero}] {atividade['name']} "
+            f"({atividade['description']}, {atividade['difficulty']}, {atividade['tag']})"
+        )
 
 
 # ---------------------------------------------------------------
@@ -319,15 +351,18 @@ def exibir_atividade(atividade):
     while True:
         print("\n" + "=" * 50)
         print(atividade["name"].upper())
-        print(atividade["tag"])
+        print(atividade["tag"] or "Sem tag")
         print(f"{atividade['description']} - {atividade['difficulty']}")
         print("=" * 50)
-        print("Instruções:", atividade.get("instruction"))
-        print("Gabarito:", atividade.get("answer"))
-        print("Fontes:", atividade.get("resources"))
-
-        print("\n[1] Imprimir   [0] Voltar à biblioteca")
-        opcao = input("Escolha: ").strip()
+        print("Instruções:", atividade["description"])
+        print("Gabarito:", atividade["answer"])
+        print("Fontes:", atividade["resources"])
+        print("\nEscolha uma das opções abaixo para continuar:")
+        print("[1] Imprimir")
+        print("[2] Editar atividade")
+        print("[3] Excluir atividade")
+        print("[4] Voltar à biblioteca")
+        opcao = input("\nEscolha: ").strip()
 
         if opcao == "1":
             # Função da história IMP-01: gera o arquivo, mostra sucesso ou erro
@@ -335,18 +370,51 @@ def exibir_atividade(atividade):
             atividade_para_impressao = {
                 "id": atividade["id"],
                 "titulo": atividade["name"],
-                "tag": atividade["tag"],
-                "descrição": atividade["description"],
+                "objetivo": atividade["description"],
                 "dificuldade": atividade["difficulty"],
                 "enunciado": atividade.get("instruction"),
                 "resposta": atividade.get("answer"),
                 "fontes": atividade.get("resources")
             }
-            quer_nova_impressao = imprimir_atividade(atividade_para_impressao)
-            if quer_nova_impressao:
-                return True
+
+            try:
+                documento_gerado = imprimir_atividade(atividade_para_impressao)
+                print("\nDocumento gerado com sucesso!")
+                print(f"\nArquivo: {documento_gerado}")
+
+                if perguntar_nova_impressao():
+                    return True
+                
+            except Exception as e:
+                print(f"{e}")
+                
             # Se não quis (ou deu erro), a atividade continua na tela.
-        elif opcao == "0":
+        elif opcao == "2":
+            edit_activity(atividade["id"])
+            try:
+                atividade = carregar_atividade(atividade["id"])
+            except ValueError as e:
+                print(f"\n{e}")
+                return False
+        elif opcao == "3":
+            # deletar atividade
+            break
+        elif opcao == "4":
+            return False
+        else:
+            print("Opção inválida.")
+
+
+def perguntar_nova_impressao():
+    while True:
+        print("\nO que deseja fazer agora?")
+        print("[1] Iniciar uma nova impressão")
+        print("[2] Voltar à tela da atividade")
+        opcao = input("\nEscolha: ").strip()
+
+        if opcao == "1":
+            return True
+        elif opcao == "2":
             return False
         else:
             print("Opção inválida.")
