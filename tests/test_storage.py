@@ -102,7 +102,7 @@ def test_create_activity_with_missing_fields(incomplete_activity_data):
 def test_get_empty_activity_list():
     activity_list = storage.get_activity_list()
 
-    assert activity_list is None
+    assert activity_list == []
 
 
 # Verifica a filtragem de atividades por tag.
@@ -202,4 +202,4 @@ def test_delete_activity(activity_data):
     storage.delete_activity(activity_id)
     deleted_activity_list = storage.get_activity_list()
 
-    assert deleted_activity_list is None
+    assert deleted_activity_list == []

@@ -82,7 +82,7 @@ def get_activity_list():
         raise ValueError(f"Erro ao buscar atividades: {e}")
     finally:
         close_db(db)
-    return [dict(activity) for activity in activity_list] if activity_list else None
+    return [dict(activity) for activity in activity_list]
 
 
 # Busca todas as atividades associadas à tag informada.
