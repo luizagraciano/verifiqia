@@ -336,7 +336,7 @@ def listar_atividades(lista):
     for numero, atividade in enumerate(lista, start=1):
         print(
             f"[{numero}] {atividade['name']} "
-            f"({atividade['description']}, {atividade['difficulty']}, {atividade['tag']})"
+            f"({atividade['description']}, {atividade['difficulty']}, {atividade['tag'] or 'Sem tag'})"
         )
 
 
