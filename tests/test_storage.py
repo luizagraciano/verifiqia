@@ -128,7 +128,7 @@ def test_get_activity_list_by_tag(activity_data, activity_data2, activity_data3)
 def test_get_activity_list_by_nonexistent_tag():
     activity_list = storage.get_activity_list_by_tag("nonexistent_tag")
 
-    assert activity_list is None
+    assert activity_list == []
 
 
 # Verifica a busca de uma atividade pelo identificador e seu conteúdo.

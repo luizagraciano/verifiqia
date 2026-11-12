@@ -73,7 +73,7 @@ def get_activity_list():
         cursor.execute("""
             SELECT * 
             FROM activity_list 
-            ORDER BY id DESC
+            ORDER BY id ASC
             """
         )
         activity_list = cursor.fetchall()
@@ -103,7 +103,7 @@ def get_activity_list_by_tag(tag: str):
         raise ValueError(f"Erro ao buscar atividades por tag: {e}")
     finally:
         close_db(db)
-    return [dict(activity) for activity in activity_by_tag] if activity_by_tag else None
+    return [dict(activity) for activity in activity_by_tag]
 
 
 # Busca uma atividade pelo identificador, incluindo seu conteúdo complementar.
@@ -249,7 +249,7 @@ def get_offline_activity_list():
         cursor.execute("""
             SELECT * 
             FROM offline_activity_list 
-            ORDER BY id DESC
+            ORDER BY id ASC
             """
         )
         offline_activity_list = cursor.fetchall()
@@ -258,7 +258,7 @@ def get_offline_activity_list():
         raise ValueError(f"Erro ao buscar atividades: {e}")
     finally:
         close_db(db)
-    return [dict(activity) for activity in offline_activity_list] if offline_activity_list else None
+    return [dict(activity) for activity in offline_activity_list]
 
 
 # Busca todas as atividades préprontas do banco offline associadas à tag informada.
