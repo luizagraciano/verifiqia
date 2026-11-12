@@ -77,6 +77,7 @@ python -m pip install -r requirements.txt
 
 Se a integração com a API do Gemini for utilizada, copie o arquivo de
 exemplo e preencha a variável GEMINI_API_KEY com a sua chave de API obtida no Google AI Studio:
+https://aistudio.google.com/api-keys
 
 ```powershell
 Copy-Item .env.example .env
@@ -92,7 +93,13 @@ python main.py seed-db
 O primeiro comando cria as tabelas definidas em `src/database/schema.sql`. O
 segundo carrega os dados iniciais definidos em `src/database/seed.sql`.
 
-### 6. Executar os testes
+### 6. Iniciar o programa a partir do menu principal
+
+```powershell
+python main.py main-menu
+```
+
+### 7. Executar os testes
 
 ```powershell
 python -m pytest
