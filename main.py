@@ -1,6 +1,6 @@
 import click
 from src.database.connection import init_db, seed_db
-from src.interface.app import generate_activity, main_menu, menu_biblioteca
+from src.interface.app import generate_activity, main_menu, edit_activity, menu_biblioteca
 
 @click.group()
 # Agrupa os comandos de linha de comando disponíveis para a aplicação.
@@ -30,6 +30,13 @@ def main_menu_command():
 # Inicia o fluxo interativo de geração de atividades com inteligência artificial.
 def generate_activity_command():
   generate_activity()
+
+@cli.command("edit-activity")
+# Inicia o fluxo interativo de edição de atividades com inteligência artificial.
+def edit_activity_command():
+  # Solicita ao usuário o ID apenas para fins de teste rápido
+  activity_id = click.prompt("Digite o ID da atividade que deseja editar")
+  edit_activity(activity_id)
 
 @cli.command("library")
 # Inicia o fluxo interativo de geração de atividades com inteligência artificial.

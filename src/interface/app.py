@@ -1,5 +1,5 @@
+from src.services.activity import save_activity_to_database, edit_activity_in_database
 from src.services.exporter import imprimir_atividade
-from src.services.activity import save_activity_to_database
 from src.services.ai_integration import generate_activity_with_ai
 from src.services.library import buscar_atividades, carregar_atividades, listar_atividades
 
@@ -128,6 +128,118 @@ def save_activity(activity):
 
     except ValueError as e:
         print(f"{e}")
+
+
+# Edita a ativid
+def edit_activity(activity_id):
+    
+    name, description, tag, difficulty, instruction, answer, resources = None, None, None, None, None, None, None
+
+    while True:
+        print("\n========== Menu de Edição de Atividade ==========")
+        print("\nEscolha uma das opções abaixo para continuar:")
+        print("[1] Editar título")
+        print("[2] Editar descrição")
+        print("[3] Editar instrução")
+        print("[4] Editar resposta")
+        print("[5] Editar fontes")
+        print("[6] Editar dificuldade")
+        print("[7] Editar tag")
+        print("[8] Sair do módulo de edição de atividades")
+    
+        choice = input("\nDigite apenas o número: ").strip()
+    
+        # Permite escolher qual campo editar ou encerrar o fluxo.      
+        if choice == "1":
+            name = input("\nDigite o novo título da atividade: ").strip()
+
+            if not name:
+                print("\nTítulo inválido. Por favor, insira um título válido.")
+                continue
+            else:
+                process_activity_update(activity_id, name, description, tag, difficulty, instruction, answer, resources)
+
+        elif choice == "2":
+            description = input("\nDigite a nova descrição da atividade: ").strip()
+
+            if not description:
+                print("\nDescrição inválida. Por favor, insira uma descrição válida.")
+                continue
+            else:
+                process_activity_update(activity_id, name, description, tag, difficulty, instruction, answer, resources)
+
+        elif choice == "3":
+            instruction = input("\nDigite a nova instrução da atividade: ").strip()
+            
+            if not instruction:
+                print("\nInstrução inválida. Por favor, insira uma instrução válida.")
+                continue
+            else:
+                process_activity_update(activity_id, name, description, tag, difficulty, instruction, answer, resources)
+
+        elif choice == "4":
+            answer = input("\nDigite a nova resposta da atividade: ").strip()
+
+            if not answer:
+                print("\nResposta inválida. Por favor, insira uma resposta válida.")
+                continue
+            else:
+                process_activity_update(activity_id, name, description, tag, difficulty, instruction, answer, resources)
+
+        elif choice == "5":
+            resources = input("\nDigite as novas fontes da atividade: ").strip()
+            
+            if not resources:
+                print("\nFontes inválidas. Por favor, insira fontes válidas.")
+                continue
+            else:
+                process_activity_update(activity_id, name, description, tag, difficulty, instruction, answer, resources)
+
+        elif choice == "6":
+            difficulty = input("\nDigite a nova dificuldade da atividade: ").strip()
+            
+            if not difficulty:
+                print("\nDificuldade inválida. Por favor, insira uma dificuldade válida.")
+                continue
+            else:
+                process_activity_update(activity_id, name, description, tag, difficulty, instruction, answer, resources)
+
+        elif choice == "7":
+            tag = input("\nDigite a nova tag da atividade: ").strip()
+            if not tag:
+                print("\nTag inválida. Por favor, insira uma tag válida.")
+                continue
+            else:
+                process_activity_update(activity_id, name, description, tag, difficulty, instruction, answer, resources)
+
+        elif choice == "8":
+            print("\nSaindo do módulo de edição de atividades...")
+            break
+
+        else:
+            print("\nOpção inválida. Tente novamente.")
+            continue
+
+
+def process_activity_update(activity_id, name, description, tag, difficulty, instruction, answer, resources):
+
+    try:
+        print("\nEditando atividade...")
+        updated_activity = edit_activity_in_database(activity_id, name, description, tag, difficulty, instruction, answer, resources)
+        display_updated_activity(updated_activity)
+    except ValueError as e:
+        print(f"{e}")
+
+
+def display_updated_activity(updated_activity):
+    
+    print(updated_activity['name'])
+    print(updated_activity['tag'])
+    print(updated_activity['description'])
+    print(updated_activity['difficulty'])
+    print(updated_activity['instruction'])
+    print(updated_activity['answer'])
+    print(updated_activity['resources'])
 
 
 # ---------------------------------------------------------------
