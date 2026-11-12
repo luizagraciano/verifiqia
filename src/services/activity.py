@@ -1,5 +1,5 @@
 
-from src.database.storage import create_activity
+from src.database.storage import create_activity, delete_activity
 from src.database.storage import (
     get_activity_by_id,
     update_activity
@@ -26,7 +26,6 @@ def save_activity_to_database(activity):
 
     except Exception as e:
         raise ValueError(f"Erro ao salvar a atividade no banco de dados: {e}")
-
 
 
 def get_activity(activity_id):
@@ -90,3 +89,29 @@ def edit_activity_in_database(
 
     except Exception as e:
         raise ValueError(f"Erro ao atualizar a atividade: {e}")
+
+
+def delete_activity_in_database(activity_id):
+    """
+    Exclui uma atividade existente.
+    Retorna uma mensagem de sucesso ou de erro.
+    """
+   
+    try:
+        activity_id = int(activity_id)
+    except (TypeError, ValueError):
+        raise ValueError("ID da atividade inválido.")
+
+    if activity_id <= 0:
+        raise ValueError("ID da atividade inválido.")
+        
+
+    activity = get_activity(activity_id)
+    if activity is None:
+        raise ValueError("Atividade não encontrada.")
+
+    try:
+        delete_activity(activity_id)
+
+    except Exception as e:
+        raise ValueError(f"Erro ao excluir a atividade: {e}")

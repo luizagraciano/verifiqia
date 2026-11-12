@@ -1,4 +1,4 @@
-from src.services.activity import save_activity_to_database, edit_activity_in_database
+from src.services.activity import save_activity_to_database, edit_activity_in_database, delete_activity_in_database
 from src.services.ai_integration import generate_activity_with_ai
 
 
@@ -235,3 +235,28 @@ def display_updated_activity(updated_activity):
     print(updated_activity['instruction'])
     print(updated_activity['answer'])
     print(updated_activity['resources'])
+
+
+def delete_activity(activity_id):
+
+    while True:
+        print("\nTem certeza que deseja excluir a atividade?")
+        print("[1] Sim, excluir a atividade")
+        print("[2] Não, voltar ao menu anterior")
+
+        choice = input("\nDigite apenas o número: ").strip()
+
+        if choice == "1":
+            try:
+                print("\nDeletando atividade...")
+                delete_activity_in_database(activity_id)
+                print("\nAtividade deletada com sucesso da biblioteca!")
+            except ValueError as e:
+                print(f"{e}")
+            break
+        elif choice == "2":
+            print("\nExclusão cancelada. Voltando ao menu anterior...")
+            break
+        else:
+            print("\nOpção inválida. Por favor, digite 's' para sim ou 'n' para não.")
+            continue
