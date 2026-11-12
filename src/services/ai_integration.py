@@ -51,7 +51,7 @@ def generate_activity_with_ai(subject, grade, difficulty, theme) -> Activity:
 
         # Solicita uma atividade no formato estruturado e com regras pedagógicas.
         interaction = client.interactions.create(
-            model ='models/gemini-3.5-flash',
+            model ='models/gemini-3.6-flash',
             input = input,
             system_instruction = """Você é um assistente pedagógico especializado no desenvolvimento de atividades educacionais para ensino de Letramento em IA na Educação Básica brasileira, atuando em conformidade com as diretrizes da BNCC (Base Nacional Comum Curricular) e princípios da Taxonomia de Bloom.
         Seu objetivo é gerar atividades estruturadas, pedagogicamente adequadas e padronizadas a partir dos parâmetros fornecidos pelo professor, com foco em verificação de fatos em textos gerados por IA.
