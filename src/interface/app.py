@@ -422,8 +422,12 @@ def exibir_atividade(atividade):
                 print(f"\n{e}")
                 return False
         elif opcao == "3":
-            # deletar atividade
-            break
+            delete_activity(atividade["id"])
+            try:
+                atividade = carregar_atividade(atividade["id"])
+            except ValueError as e:
+                print(f"\n{e}")
+                return False
         elif opcao == "4":
             return False
         else:
