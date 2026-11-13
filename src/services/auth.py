@@ -1,101 +1,42 @@
 import bcrypt
+from src.database.storage import get_user, create_user
 
-# Gera um hash seguro para a senha informada usando bcrypt e um salt aleatório.
-def password_hash(password: str):
+def password_hash(password):
     password_bytes = password.encode('utf-8')
-    salt = bcrypt.gensalt()
+    salt = bcrypt.gensalt(rounds=12)  # Gera um salt aleatório com 12 rounds de complexidade
     password_hash = bcrypt.hashpw(password_bytes, salt)
     return password_hash
 
-import hashlib
-import os
-from getpass import getpass
- 
-# Quantas vezes o hash da senha é repetido (deixa mais difícil de quebrar).
-HASH_ROUNDS = 600_000
- 
-# Lista onde ficam os professores cadastrados (só na memória, enquanto o programa roda).
-users = []
 
-# ======================================================================
-# CAMADA 1 e 2 — ENTRADA DE DADOS + CHECAGEM (CADASTRO)
-# Cada dado é pedido num laço que só termina quando o valor está correto.
-# ======================================================================
- 
-print("\n================= Cadastro de Professor =================")
- 
-# --- Nome: nome e sobrenome, sem números ---
-while True:
-    name = " ".join(input("\nNome completo: ").split())  # tira espaços extras
-    if len(name.split()) >= 2 and not any(c.isdigit() for c in name):
-        break
-    print("Nome inválido. Digite nome e sobrenome, sem números.")
- 
-# --- E-mail: um "@", sem espaços, e um ponto no domínio (ex.: nome@escola.com) ---
-while True:
-    email = input("\nE-mail: ").strip().lower()
-    if email.count("@") == 1 and " " not in email:
-        local, domain = email.split("@")
-        if local != "" and "." in domain and not domain.startswith(".") and not domain.endswith("."):
-            break
-    print("E-mail inválido. Exemplo: nome@escola.com")
- 
-# --- Senha: mínimo 8 caracteres, com letras e números, digitada duas vezes ---
-while True:
-    password = getpass("\nSenha (mín. 8 caracteres, com letras e números): ")
- 
-    if len(password) < 8 or not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
-        print("Senha inválida. Use pelo menos 8 caracteres, com letras e números.")
-        continue
- 
-    if password != getpass("Confirme a senha: "):
-        print("As senhas não conferem. Digite novamente.")
-        continue
- 
-    break
- 
-# ======================================================================
-# CAMADA 3 — ARMAZENAMENTO
-# A senha nunca é guardada: guardamos só o hash dela, misturado com um "salt" aleatório.
-# ======================================================================
- 
-salt = os.urandom(16)
-password_hash = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, HASH_ROUNDS)
- 
-users.append({
-    "name": name,
-    "email": email,
-    "salt": salt,
-    "password_hash": password_hash,
-})
- 
-print("\nCadastro realizado com sucesso!")
- 
-# ======================================================================
-# CAMADA 4 — LOGIN
-# Pede e-mail e senha, refaz o hash e compara com o que está guardado (até 3 tentativas).
-# ======================================================================
- 
-print("\n======================== Login ========================")
- 
-logged_user = None
- 
-for attempt in range(3):
-    login_email = input("\nE-mail: ").strip().lower()
-    login_password = getpass("Senha: ")
- 
-    for user in users:
-        if user["email"] == login_email:
-            digest = hashlib.pbkdf2_hmac("sha256", login_password.encode(), user["salt"], HASH_ROUNDS)
-            if digest == user["password_hash"]:
-                logged_user = user
- 
-    if logged_user is not None:
-        break
- 
-    print("E-mail ou senha incorretos.")
- 
-if logged_user is not None:
-    print(f"\nBem-vindo(a), {logged_user['name'].split()[0]}!")
-else:
-    print("\nMuitas tentativas incorretas. Encerrando.")
+# Verifica se a senha informada corresponde ao hash armazenado no banco de dados.
+def verify_password(password, hashed):
+    password_bytes = password.encode('utf-8')
+    verified_password = bcrypt.checkpw(password_bytes, hashed)
+    return verified_password
+
+
+# Verifica se a senha informada corresponde ao hash armazenado no banco de dados.
+def check_login(email, password):
+    try:
+        user = get_user(email)
+        if user and verify_password(password, user["password"]):
+            return user
+        else:
+            raise ValueError("\nE-mail ou senha incorretos. Tente novamente.")
+    except Exception as e:
+        raise ValueError(f"{e}")
+
+
+# Registra um novo usuário no banco de dados, garantindo que o e-mail e o CPF sejam únicos.
+def register_user(name, email, cpf, password):
+    # Verifica se o e-mail já está cadastrado
+    if get_user(email) or get_user(cpf) is not None:
+        raise ValueError("Usuário já cadastrado. Por favor, use outro e-mail ou cpf.")
+
+    # Gera o hash da senha
+    password_hash_value = password_hash(password)
+
+    try:
+        create_user(name, email, cpf, password_hash_value)
+    except Exception as e:
+        raise ValueError(f"{e}")
