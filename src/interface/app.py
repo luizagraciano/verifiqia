@@ -1,3 +1,6 @@
+from getpass import getpass
+from validate_docbr import CPF
+from src.services.auth import check_login, register_user
 from src.services.exporter import imprimir_atividade
 from src.services.activity import save_activity_to_database, edit_activity_in_database, delete_activity_in_database
 from src.services.ai_integration import generate_activity_with_ai
@@ -8,12 +11,102 @@ from src.services.library import (
 )
 
 
+def init_app():
+    while True:
+        print("\n=================== VerifiQIA ===================")
+        print("\nTem uma conta? Faça login ou cadastre-se para continuar.")
+        print("\n[1] Login")
+        print("[2] Cadastro")
+        choice = input("\nDigite apenas o número: ").strip()
+
+        if choice == "1":
+            login()
+        elif choice == "2":
+            register()
+        else:
+            print("\nOpção inválida. Tente novamente.")
+            continue
+
+
+def login():
+    logged_user = None
+
+    print("\n===================== Login =====================")
+ 
+    for attempt in range(3):
+        login_email = input("\nE-mail: ").strip().lower()
+        login_password = getpass("\nSenha: ")
+ 
+        try:
+            logged_user = check_login(login_email, login_password)
+            break
+        except ValueError as e:
+            print(f"{e}")
+            answer = input("\nQuer realizar o cadastro? (s/n): ").strip().lower()
+            if answer == "s":
+                register()
+                return  # Sai da função login após o cadastro
+
+    if logged_user is not None:
+        print(f"\nBem-vindo(a), {logged_user['username'].split()[0]}!")
+        main_menu()
+    else:
+        print("\nVocê excedeu o número máximo de tentativas. Tente novamente mais tarde ou faça o cadastro.")
+
+
+def register():
+    print("\n============= Cadastro de Professor =============")
+ 
+    # Nome e sobrenome, sem números
+    while True:
+        name = " ".join(input("\nNome completo: ").split())  # tira espaços extras
+        if len(name.split()) >= 2 and not any(c.isdigit() for c in name):
+            break
+        print("\nNome inválido. Digite nome e sobrenome, sem números.")
+ 
+    # E-mail: um "@", sem espaços, e um ponto no domínio (ex.: nome@escola.com)
+    while True:
+        email = input("\nE-mail: ").strip().lower()
+        if email.count("@") == 1 and " " not in email:
+            local, domain = email.split("@")
+            if local != "" and "." in domain and not domain.startswith(".") and not domain.endswith("."):
+                break
+        print("\nE-mail inválido. Exemplo: nome@escola.com")
+ 
+    # CPF: 11 dígitos, validado com o módulo validate-docbr
+    while True:
+        cpf = input("\nCPF (somente números): ").strip()
+        if CPF().validate(cpf):
+            break
+        print("\nCPF inválido. Digite um CPF válido.")
+
+    # Senha: mínimo 8 caracteres, com letras e números, digitada duas vezes
+    while True:
+        password = getpass("\nSenha (mín. 8 caracteres, com letras e números): ")
+ 
+        if len(password) < 8 or not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
+            print("\nSenha inválida. Use pelo menos 8 caracteres, com letras e números.")
+            continue
+ 
+        if password != getpass("\nConfirme a senha: "):
+            print("\nAs senhas não conferem. Digite novamente.")
+            continue
+ 
+        break
+
+    try:
+        register_user(name, email, cpf, password)
+        print("\nCadastro realizado com sucesso! Faça login para continuar.")
+        login()  # Chama a função de login após o cadastro bem-sucedido
+    except ValueError as e:
+        print(f"\nErro ao cadastrar usuário: {e}")
+
+
 # Exibe o menu principal da aplicação e direciona para os fluxos de geração de atividades ou biblioteca de atividades.
 def main_menu():
 
-    print("\n============= Bem-vindo ao VerifiQIA =============")
-
     while True:
+        print("\n=================== VerifiQIA ===================")
         print("\n================= Menu Principal =================")
         print("\nEscolha uma das opções abaixo para continuar:")
         print("[1] Gerar atividade com inteligência artificial")

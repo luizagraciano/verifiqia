@@ -1,4 +1,4 @@
-from src.database.storage import get_activity_by_id, get_activity_list, get_activity_content, get_activity_list_by_tag
+from src.database.storage import get_activity_by_id, get_activity_list
 
 # ---------------------------------------------------------------
 # 2) LISTAR AS ATIVIDADES
