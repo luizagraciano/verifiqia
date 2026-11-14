@@ -1,18 +1,17 @@
 from src.database.connection import get_db, close_db
-from src.services.auth import password_hash
 
 ##OPERAÇÕES DO USUÁRIO
 # Busca um usuário pelo endereço de e-mail e retorna seus dados como dicionário.
-def get_user(email: str):
+def get_user(identifier: str):
     try:
         db = get_db()
         cursor = db.cursor()
         cursor.execute("""
             SELECT * 
             FROM users 
-            WHERE email = ?
+            WHERE email = ? OR cpf = ?
             """, 
-            (email,)
+            (identifier, identifier)
         )
         user = cursor.fetchone()
 
@@ -28,12 +27,11 @@ def create_user(username: str, email: str, cpf: str, password: str):
     try:
         db = get_db()
         cursor = db.cursor()
-        hashed_password = password_hash(password)
         cursor.execute("""
             INSERT INTO users (username, email, cpf, password) 
             VALUES (?, ?, ?, ?)
             """, 
-            (username, email, cpf, hashed_password)
+            (username, email, cpf, password)
         )
         db.commit()
     except Exception as e:
@@ -48,13 +46,12 @@ def update_user(email: str, password: str):
     try:
         db = get_db()
         cursor = db.cursor()
-        hashed_password = password_hash(password)
         cursor.execute("""
             UPDATE users 
             SET password = ? 
             WHERE email = ?
             """, 
-            (hashed_password, email)
+            (password, email)
         )
         db.commit()
     except Exception as e:
@@ -73,7 +70,7 @@ def get_activity_list():
         cursor.execute("""
             SELECT * 
             FROM activity_list 
-            ORDER BY id DESC
+            ORDER BY id ASC
             """
         )
         activity_list = cursor.fetchall()
@@ -82,7 +79,7 @@ def get_activity_list():
         raise ValueError(f"Erro ao buscar atividades: {e}")
     finally:
         close_db(db)
-    return [dict(activity) for activity in activity_list] if activity_list else None
+    return [dict(activity) for activity in activity_list]
 
 
 # Busca todas as atividades associadas à tag informada.
@@ -103,7 +100,7 @@ def get_activity_list_by_tag(tag: str):
         raise ValueError(f"Erro ao buscar atividades por tag: {e}")
     finally:
         close_db(db)
-    return [dict(activity) for activity in activity_by_tag] if activity_by_tag else None
+    return [dict(activity) for activity in activity_by_tag]
 
 
 # Busca uma atividade pelo identificador, incluindo seu conteúdo complementar.
@@ -249,7 +246,7 @@ def get_offline_activity_list():
         cursor.execute("""
             SELECT * 
             FROM offline_activity_list 
-            ORDER BY id DESC
+            ORDER BY id ASC
             """
         )
         offline_activity_list = cursor.fetchall()
@@ -258,7 +255,7 @@ def get_offline_activity_list():
         raise ValueError(f"Erro ao buscar atividades: {e}")
     finally:
         close_db(db)
-    return [dict(activity) for activity in offline_activity_list] if offline_activity_list else None
+    return [dict(activity) for activity in offline_activity_list]
 
 
 # Busca todas as atividades préprontas do banco offline associadas à tag informada.
