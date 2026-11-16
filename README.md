@@ -10,8 +10,8 @@ O VerifiQIA é uma projeto desenvolvido para a disciplina de Projeto 1 da Cesar 
 - **Click**: criação da interface de linha de comando.
 - **SQLite**: banco de dados local e arquivo `data/database.sqlite`.
 - **bcrypt**: geração de hashes seguros para senhas.
-- **Google GenAI**: dependências preparadas para integração com recursos de
-  inteligência artificial.
+- **validate-docbr**: validação de CPF
+- **Google GenAI**: dependências preparadas para integração com recursos de inteligência artificial.
 - **pytest**: execução dos testes automatizados.
 - **python-dotenv**: suporte à configuração por variáveis de ambiente.
 
@@ -83,30 +83,30 @@ https://aistudio.google.com/api-keys
 Copy-Item .env.example .env
 ```
 
-### 5. Inicializar e preparar o banco de dados
+### 5. Inicializar e preparar o banco de dados (pode ser pulado se for executado o passo 6 diretamente)
 
 ```powershell
-python main.py init-db
-python main.py seed-db
+python utilities.cli init-db
+python utilities.cli seed-db
 ```
 
 O primeiro comando cria as tabelas definidas em `src/database/schema.sql`. O
 segundo carrega os dados iniciais definidos em `src/database/seed.sql`.
 
-### 6. Iniciar o programa a partir do menu principal
+### 6. Iniciar o programa
 
 ```powershell
-python main.py main-menu
+python -m main
 ```
 
-### 7. Executar os testes
+### 7. Executar os testes automatizados
 
 ```powershell
 python -m pytest
 ```
 
-### 7. Consultar os comandos disponíveis
+### 7. Consultar os comandos disponíveis para testes individualizados
 
 ```powershell
-python main.py --help
+python utilities.cli --help
 ```
