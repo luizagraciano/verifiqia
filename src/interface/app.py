@@ -1,9 +1,12 @@
+import os
+from dotenv import load_dotenv
 from getpass import getpass
 from validate_docbr import CPF
 from src.services.auth import check_login, register_user
 from src.services.exporter import imprimir_atividade
 from src.services.activity import save_activity_to_database, edit_activity_in_database, delete_activity_in_database
 from src.services.ai_integration import generate_activity_with_ai
+from src.services.offline import TAGS_SISTEMA, carregar_atividade_offline, listar_atividades_offline, buscar_atividades_por_tag_offline
 from src.services.library import (
     buscar_atividades,
     carregar_atividade,
@@ -12,6 +15,23 @@ from src.services.library import (
 
 
 def init_app():
+    while True:
+        load_dotenv(override=True)  # Carrega variáveis de ambiente do arquivo .env
+
+        app_mode = os.environ.get("CONNECTION_STATUS")
+
+        if app_mode == "offline":
+            print("\n=================== VerifiQIA ===================")
+            print("\nVocê está sem conexão com a internet. Conecte-se para iniciar o uso da aplicação.")
+            refresh = input("\nDeseja tentar novamente? (s/n): ").strip().lower()
+            if refresh == "s":
+                continue
+            else:
+                print("\nSaindo da aplicação...")
+                exit()
+        else:
+            break  # Sai do loop se a conexão estiver ativa
+
     while True:
         print("\n=================== VerifiQIA ===================")
         print("\nTem uma conta? Faça login ou cadastre-se para continuar.")
@@ -110,8 +130,9 @@ def main_menu():
         print("\n================= Menu Principal =================")
         print("\nEscolha uma das opções abaixo para continuar:")
         print("[1] Gerar atividade com inteligência artificial")
-        print("[2] Acessar biblioteca de atividades")
-        print("[3] Sair")
+        print("[2] Biblioteca de Atividades")
+        print("[3] Banco de Atividades Offline")
+        print("[4] Sair")
 
         choice = input("\nDigite apenas o número: ").strip()
 
@@ -121,6 +142,9 @@ def main_menu():
             print("\nIndo para a biblioteca de atividades...")
             menu_biblioteca()
         elif choice == "3":
+            print("\nIndo para o banco de atividades offline...")
+            rodar_menu_offline()
+        elif choice == "4":
             print("\nSaindo do programa...")
             break
         else:
@@ -162,7 +186,28 @@ def process_input(subject, grade, difficulty, theme, input_processed, activity):
 
 # Exibe as opções disponíveis para continuar o fluxo da atividade.
 def generate_activity(from_library=False):
-
+    while True:
+        load_dotenv(override=True)  # Carrega variáveis de ambiente do arquivo .env
+    
+        app_mode = os.getenv("CONNECTION_STATUS")
+    
+        if app_mode == "offline":
+            print("\nVocê está no modo offline. A geração de atividades com IA não está disponível.")
+            print("[1] Acessar o Banco de Atividades Offline")
+            print("[2] Recarregar a conexão com a internet para usar o gerador de atividades com IA.")
+            print("[3] Voltar")
+            choice = input("\nEscolha uma opção: ").strip()
+            if choice == "1":
+                rodar_menu_offline()
+            elif choice == "2":
+                print("\nRecarregando a conexão...")
+                continue
+            else:
+                print("\nVoltando...")
+                return
+        else:
+            break  # Sai do loop se a conexão estiver ativa
+    
     input_processed = False
     subject, grade, difficulty, theme, activity = None, None, None, None, None
 
@@ -490,9 +535,9 @@ def exibir_atividade(atividade):
                 "titulo": atividade["name"],
                 "objetivo": atividade["description"],
                 "dificuldade": atividade["difficulty"],
-                "enunciado": atividade.get("instruction"),
-                "resposta": atividade.get("answer"),
-                "fontes": atividade.get("resources")
+                "enunciado": atividade["instruction"],
+                "resposta": atividade["answer"],
+                "fontes": atividade["resources"]
             }
 
             try:
@@ -540,3 +585,102 @@ def perguntar_nova_impressao():
             return False
         else:
             print("Opção inválida.")
+
+
+def escolher_tag(mensagem_prompt: str):
+    """Função auxiliar para mostrar as tags e retornar a escolhida."""
+    print("\n--- TAGS DISPONÍVEIS ---")
+    for i, tag in enumerate(TAGS_SISTEMA, start=1):
+        print(f"{i}. {tag}")
+    
+    try:
+        escolha = int(input(mensagem_prompt)) - 1
+        if 0 <= escolha < len(TAGS_SISTEMA):
+            return TAGS_SISTEMA[escolha]
+        else:
+            print("\nNúmero de tag inválido.")
+            return None
+    except ValueError:
+        print("\nErro: Por favor, digite apenas o NÚMERO.")
+        return None
+
+
+def rodar_menu_offline():
+    while True:
+        print("\n=========== Banco de Atividades Offline ===========")
+        atividades_offline = listar_atividades_offline()
+        lista_offline = exibir_atividades_offline(atividades_offline) # Exemplo: busca atividades de uma tag específica
+
+        print("\n[F] Filtrar atividades por tag")
+        print("[V] Voltar")
+        opcao = input("\nDigite o número da atividade para ver detalhes, ou escolha uma opção: ").strip().upper()
+
+        if opcao.isdigit() and 1 <= int(opcao) <= len(lista_offline):
+            atividade_resumida = lista_offline[int(opcao) - 1]
+            try:
+                atividade = carregar_atividade_offline(atividade_resumida["id"])
+                exibir_detalhes_atividade(atividade)
+            except ValueError as e:
+                print(f"\n{e}")
+                continue
+
+        elif opcao == "F":
+            print("\n--- FILTRAR ATIVIDADES ---")
+            tag_escolhida = escolher_tag("\nDigite o número da tag para buscar: ")
+            
+            if tag_escolhida:
+                print(f"\nBuscando atividades de {tag_escolhida}...")
+                try:
+                    resultados = buscar_atividades_por_tag_offline(tag_escolhida)
+                    
+                    if resultados:
+                        print(f"\nEncontramos {len(resultados)} atividade(s):")
+                        exibir_atividades_offline(resultados)
+                    else:
+                        print(f"\nNenhuma atividade encontrada com a tag '{tag_escolhida}'.")
+                except Exception as e:
+                    print(f"{e}")
+                
+        elif opcao == "V":
+            print("\nVoltando...")
+            return
+        else:
+            print("\nOpção inválida. Tente novamente.")
+
+
+def exibir_atividades_offline(atividades_offline):
+    for numero, atividade in enumerate(atividades_offline, start=1):
+        print(
+            f"[{numero}] {atividade['name']} "
+            f"({atividade['description']}, {atividade['difficulty']}, {atividade['tag'] or 'Sem tag'})"
+        )
+    return atividades_offline
+
+
+def exibir_detalhes_atividade(atividade):
+    while True:
+        print("\n" + "=" * 50)
+        print(atividade["name"].upper())
+        print(atividade["tag"] or "Sem tag")
+        print(f"{atividade['description']} - {atividade['difficulty']}")
+        print("=" * 50)
+        print("Instruções:", atividade["description"])
+        print("Gabarito:", atividade["answer"])
+        print("Fontes:", atividade["resources"])
+        print("\nEscolha uma das opções abaixo para continuar:")
+        print("[1] Salvar na Biblioteca")
+        print("[2] Voltar")
+        opcao = input("\nEscolha: ").strip()
+
+        if opcao == '1':
+            try:
+                save_activity_to_database(atividade)
+                print("\nAtividade salva com sucesso na biblioteca!")
+        
+            except ValueError as e:
+                print(f"{e}")
+        elif opcao == '2':
+            return
+        else:
+            print("\nOpção inválida. Tente novamente.")
+            continue
