@@ -258,6 +258,31 @@ def get_offline_activity_list():
     return [dict(activity) for activity in offline_activity_list]
 
 
+# Busca uma atividade offline pelo identificador, incluindo seu conteúdo complementar.
+def get_offline_activity_by_id(activity_id: int):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT offline_activity_list.*, 
+            offline_activity_content.instruction, 
+            offline_activity_content.answer, 
+            offline_activity_content.resources
+            FROM offline_activity_list
+            LEFT JOIN offline_activity_content ON offline_activity_list.id = offline_activity_content.activity_id 
+            WHERE offline_activity_list.id = ?
+            """, 
+            (activity_id,)
+        )
+        activity = cursor.fetchone()
+
+    except Exception as e:
+        raise ValueError(f"Erro ao buscar atividade: {e}")
+    finally:
+        close_db(db)
+    return dict(activity) if activity else None
+
+
 # Busca todas as atividades préprontas do banco offline associadas à tag informada.
 def get_offline_activity_list_by_tag(tag: str):
     try:
@@ -276,7 +301,7 @@ def get_offline_activity_list_by_tag(tag: str):
         raise ValueError(f"Erro ao buscar atividades por tag: {e}")
     finally:
         close_db(db)
-    return [dict(activity) for activity in offline_activity_by_tag] if offline_activity_by_tag else None
+    return [dict(activity) for activity in offline_activity_by_tag]
 
 
 # Busca o conteúdo detalhado associado a uma atividade pré-pronta do banco offline.
@@ -301,4 +326,4 @@ def get_offline_activity_content(activity_id: int):
         raise ValueError(f"Erro ao buscar conteúdo da atividade: {e}")
     finally:
         close_db(db)
-    return dict(offline_activity_content) if offline_activity_content else None
+    return dict(offline_activity_content)

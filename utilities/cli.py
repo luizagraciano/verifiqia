@@ -1,6 +1,6 @@
 import click
 from src.database.connection import init_db, seed_db
-from src.interface.app import generate_activity, init_app, main_menu, edit_activity, menu_biblioteca, delete_activity
+from src.interface.app import generate_activity, init_app, main_menu, edit_activity, menu_biblioteca, delete_activity, rodar_menu_offline
 
 @click.group()
 # Agrupa os comandos de linha de comando disponíveis para a aplicação.
@@ -45,6 +45,11 @@ def edit_activity_command():
 # Inicia o fluxo interativo de geração de atividades com inteligência artificial.
 def library_command():
   menu_biblioteca()
+
+@cli.command("offline-activities")
+# Inicia o fluxo interativo de geração de atividades com inteligência artificial.
+def offline_activities_command():
+  rodar_menu_offline()
 
 @cli.command("delete-activity")
 # Inicia o fluxo interativo de exclusão de atividades com inteligência artificial.

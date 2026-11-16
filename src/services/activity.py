@@ -14,7 +14,7 @@ def save_activity_to_database(activity):
     # Desempacota os campos da atividade em variáveis individuais para envio ao banco de dados.
     name = activity["name"]
     description = activity["description"]
-    tag = None
+    tag = activity["tag"] or None
     difficulty = activity["difficulty"]
     instruction = activity["instruction"]
     answer = activity["answer"]
