@@ -18,6 +18,7 @@ class Activity(BaseModel):
     difficulty: str = Field(description="Nível de dificuldade da atividade")
     answer: str = Field(description="Resposta da atividade")
     resources: str = Field(description="Fontes utilizadas na atividade")
+    tag: str = Field(description="Tag da atividade")
 
 
 # Gera uma atividade educacional estruturada usando a API do Gemini.
