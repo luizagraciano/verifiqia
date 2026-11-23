@@ -2,5 +2,6 @@
 .env
 .vscode
 data
+data
 saida
 __pycache__

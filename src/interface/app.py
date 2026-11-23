@@ -684,3 +684,6 @@ def exibir_detalhes_atividade(atividade):
         else:
             print("\nOpção inválida. Tente novamente.")
             continue
+        
+if __name__ == "__main__":
+    init_app()
