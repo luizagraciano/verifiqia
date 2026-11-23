@@ -6,7 +6,7 @@ O VerifiQIA é uma projeto desenvolvido para a disciplina de Projeto 1 da Cesar 
 
 ## Tecnologias utilizadas
 
-- **Python**: linguagem principal do projeto.
+- **Python 3.14**: linguagem principal do projeto.
 - **Click**: criação da interface de linha de comando.
 - **SQLite**: banco de dados local e arquivo `data/database.sqlite`.
 - **bcrypt**: geração de hashes seguros para senhas.
@@ -19,14 +19,12 @@ O VerifiQIA é uma projeto desenvolvido para a disciplina de Projeto 1 da Cesar 
 
 ```text
 verifiqia/
-├── data/
-│   └── database.sqlite       # Banco de dados local
 ├── src/
 │   ├── database/
 │   │   ├── connection.py     # Conexão e preparação do banco
 │   │   ├── schema.sql        # Estrutura das tabelas
 │   │   ├── seed.sql          # Dados iniciais
-│   │   └── __init__.py
+│   │   └── storage.py        # Operações de persistência
 │   ├── interface/
 │   │   └── app.py            # Camada de interface da aplicação
 │   └── services/
@@ -38,9 +36,13 @@ verifiqia/
 │       └── offline.py         # Recursos para uso offline
 ├── tests/
 │   ├── conftest.py           # Fixtures e configuração dos testes
+│   ├── test_activity.py      # Testes das atividades
 │   └── test_storage.py       # Testes de persistência
+├── utilities/
+│   └── cli.py                # Inicialização e execução auxiliar do sistema
 ├── .env.example              # Modelo de variáveis de ambiente
-├── main.py                   # Ponto de entrada da CLI
+├── .gitignore
+├── main.py                   # Inicializa o banco e inicia a aplicação
 ├── requirements.txt          # Dependências do projeto
 └── README.md
 ```
@@ -83,23 +85,47 @@ https://aistudio.google.com/api-keys
 Copy-Item .env.example .env
 ```
 
-### 5. Inicializar e preparar o banco de dados (pode ser pulado se for executado o passo 6 diretamente)
+#### Simulação do estado de conexão
 
-```powershell
-python utilities.cli init-db
-python utilities.cli seed-db
-```
+A variável `CONNECTION_STATUS`, localizada no arquivo `.env`, define o modo
+de conexão usado pela aplicação:
 
-O primeiro comando cria as tabelas definidas em `src/database/schema.sql`. O
-segundo carrega os dados iniciais definidos em `src/database/seed.sql`.
+- `CONNECTION_STATUS="online"`: inicia normalmente e permite usar os recursos
+  de geração de atividades com IA.
+- `CONNECTION_STATUS="offline"`: inicia em modo offline, bloqueia o acesso
+  ao gerador de atividades e permite usar o banco de atividades pré-carregado.
 
-### 6. Iniciar o programa
+Atenção: esta configuração simula o estado da conexão e não verifica se o
+dispositivo está realmente conectado à internet. Você pode modificar o valor
+em tempo de execução para ver como a aplicação responde ao estado online/offline.
+
+### 5. Iniciar o programa
+
+O `main.py` é o ponto de entrada recomendado. Ao executá-lo, a aplicação
+cria o banco, executa o seed e inicia a interface interativa automaticamente:
 
 ```powershell
 python -m main
 ```
 
-### 7. Executar os testes automatizados
+O arquivo `main.py` realiza, nesta ordem:
+
+1. `init_db()`: cria as tabelas a partir de `src/database/schema.sql`.
+2. `seed_db()`: carrega os dados iniciais de `src/database/seed.sql`.
+3. `init_app()`: inicia o programa.
+
+O banco SQLite é criado em `data/database.sqlite`, por isso não é necessário
+executar a inicialização manual antes de usar `main.py`.
+
+Como alternativa, os comandos da CLI podem ser usados separadamente:
+
+```powershell
+python utilities/cli.py init-db
+python utilities/cli.py seed-db
+python utilities/cli.py init-app
+```
+
+### 6. Executar os testes automatizados
 
 ```powershell
 python -m pytest
@@ -108,5 +134,5 @@ python -m pytest
 ### 7. Consultar os comandos disponíveis para testes individualizados
 
 ```powershell
-python utilities.cli --help
+python utilities/cli.py --help
 ```
