@@ -55,7 +55,7 @@ def login():
  
     for attempt in range(3):
         login_email = input("\nE-mail: ").strip().lower()
-        login_password = getpass("\nSenha: ")
+        login_password = getpass(prompt="\nSenha: ", echo_char="*")
  
         try:
             logged_user = check_login(login_email, login_password)
@@ -95,20 +95,20 @@ def register():
  
     # CPF: 11 dígitos, validado com o módulo validate-docbr
     while True:
-        cpf = input("\nCPF (somente números): ").strip()
+        cpf = input("\nCPF: ").strip()
         if CPF().validate(cpf):
             break
         print("\nCPF inválido. Digite um CPF válido.")
 
     # Senha: mínimo 8 caracteres, com letras e números, digitada duas vezes
     while True:
-        password = getpass("\nSenha (mín. 8 caracteres, com letras e números): ")
+        password = getpass(prompt="\nSenha (mín. 8 caracteres, com letras e números): ", echo_char="*")
  
         if len(password) < 8 or not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
             print("\nSenha inválida. Use pelo menos 8 caracteres, com letras e números.")
             continue
  
-        if password != getpass("\nConfirme a senha: "):
+        if password != getpass(prompt="\nConfirme a senha: ", echo_char="*"):
             print("\nAs senhas não conferem. Digite novamente.")
             continue
  
